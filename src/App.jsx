@@ -26,6 +26,7 @@ import NuevaVisitaPage from "./pages/NuevaVisitaPage";
 import AdopcionesLayout from "./pages/adopciones/AdopcionesLayout";
 import AdopcionesResumen from "./pages/adopciones/AdopcionesResumen";
 import AdopcionesHistorial from "./pages/adopciones/AdopcionesHistorial";
+import MisSolicitudesPage from "./pages/MisSolicitudesPage";
 
 function App() {
   return (
@@ -56,6 +57,11 @@ function App() {
             } />
             <Route path="/nueva-visita" element={
               <ProtectedAdminRoute><NuevaVisitaPage /></ProtectedAdminRoute>
+            } />
+
+            {/* ── User's own visit requests ── */}
+            <Route path="/mis-solicitudes" element={
+              <ProtectedRoute><MisSolicitudesPage /></ProtectedRoute>
             } />
 
             {/* ── Adoptions section (authenticated users) ── */}

@@ -13,8 +13,15 @@ class Candidato(models.Model):
     adoption history view (since no separate adoption event is stored).
     """
 
+    GENERO_CHOICES = [
+        ('macho', 'Macho'),
+        ('hembra', 'Hembra'),
+        ('desconocido', 'Desconocido'),
+    ]
+
     nombre = models.CharField(max_length=100)
     especie = models.CharField(max_length=50)  # e.g. Perro, Gato, Conejo
+    genero = models.CharField(max_length=20, choices=GENERO_CHOICES, default='desconocido')
     edad = models.PositiveIntegerField(validators=[MinValueValidator(0)])
     descripcion = models.TextField()
     imagen = models.URLField(blank=True, null=True)  # External image URL

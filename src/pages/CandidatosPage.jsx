@@ -10,6 +10,7 @@ import { useState, useEffect, useMemo } from "react";
 import Layout from "../components/Layout";
 import Card from "../components/Card";
 import EmptyState from "../components/EmptyState";
+import SolicitudVisitaModal from "../components/SolicitudVisitaModal";
 import { candidatosService } from "../services/api";
 
 export default function CandidatosPage() {
@@ -21,6 +22,9 @@ export default function CandidatosPage() {
   const [search, setSearch] = useState("");
   const [especieFilter, setEspecieFilter] = useState("");
   const [estadoFilter, setEstadoFilter] = useState("todos");
+
+  // Visit-request modal state
+  const [selectedCandidato, setSelectedCandidato] = useState(null);
 
   useEffect(() => {
     loadCandidatos();
@@ -66,17 +70,22 @@ export default function CandidatosPage() {
     return [...set].sort();
   }, [candidatos]);
 
-  // Apply all active filters to produce the visible subset
+  // Apply filters then sort so non-adopted candidates appear first
   const filtered = useMemo(() => {
-    return candidatos.filter((c) => {
-      const matchSearch = !search || c.nombre.toLowerCase().includes(search.toLowerCase());
-      const matchEspecie = !especieFilter || c.especie.toLowerCase() === especieFilter.toLowerCase();
-      const matchEstado =
-        estadoFilter === "todos" ||
-        (estadoFilter === "disponibles" && !c.adoptado) ||
-        (estadoFilter === "adoptados" && c.adoptado);
-      return matchSearch && matchEspecie && matchEstado;
-    });
+    return candidatos
+      .filter((c) => {
+        const matchSearch = !search || c.nombre.toLowerCase().includes(search.toLowerCase());
+        const matchEspecie = !especieFilter || c.especie.toLowerCase() === especieFilter.toLowerCase();
+        const matchEstado =
+          estadoFilter === "todos" ||
+          (estadoFilter === "disponibles" && !c.adoptado) ||
+          (estadoFilter === "adoptados" && c.adoptado);
+        return matchSearch && matchEspecie && matchEstado;
+      })
+      .sort((a, b) => {
+        if (a.adoptado === b.adoptado) return 0;
+        return a.adoptado ? 1 : -1; // non-adopted first
+      });
   }, [candidatos, search, especieFilter, estadoFilter]);
 
   if (loading) {
@@ -191,10 +200,20 @@ export default function CandidatosPage() {
                 candidato={c}
                 onToggle={handleToggleAdopcion}
                 onDelete={handleDelete}
+                onSolicitar={setSelectedCandidato}
               />
             </div>
           ))}
         </div>
+      )}
+
+      {/* Visit-request modal — rendered outside the grid so it overlays everything */}
+      {selectedCandidato && (
+        <SolicitudVisitaModal
+          candidato={selectedCandidato}
+          onClose={() => setSelectedCandidato(null)}
+          onSuccess={() => setSelectedCandidato(null)}
+        />
       )}
     </Layout>
   );

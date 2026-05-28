@@ -15,7 +15,7 @@ class CandidatoSerializer(serializers.ModelSerializer):
     class Meta:
         model = Candidato
         fields = [
-            'id', 'nombre', 'especie', 'edad', 'descripcion',
+            'id', 'nombre', 'especie', 'genero', 'edad', 'descripcion',
             'imagen', 'adoptado', 'fecha_creacion', 'fecha_actualizacion',
         ]
         read_only_fields = ['id', 'fecha_creacion', 'fecha_actualizacion']

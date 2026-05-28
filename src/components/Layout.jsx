@@ -64,12 +64,14 @@ export default function Layout({ children }) {
               <>
                 <NavItem to="/">Inicio</NavItem>
                 <NavItem to="/candidatos">Candidatos</NavItem>
-                {isAdmin() && (
+                {isAdmin() ? (
                   <>
                     <NavItem to="/nuevo">Nuevo candidato</NavItem>
                     <NavItem to="/visitas">Visitas</NavItem>
                     <NavItem to="/nueva-visita">Nueva visita</NavItem>
                   </>
+                ) : (
+                  <NavItem to="/mis-solicitudes">Mis solicitudes</NavItem>
                 )}
                 <NavItem to="/adopciones">Adopciones</NavItem>
                 {/* Display the logged-in user's email */}
@@ -106,12 +108,14 @@ export default function Layout({ children }) {
               <>
                 <NavLink to="/" onClick={() => setMenuOpen(false)} className="text-sm text-rim hover:text-white font-semibold">Inicio</NavLink>
                 <NavLink to="/candidatos" onClick={() => setMenuOpen(false)} className="text-sm text-rim hover:text-white font-semibold">Candidatos</NavLink>
-                {isAdmin() && (
+                {isAdmin() ? (
                   <>
                     <NavLink to="/nuevo" onClick={() => setMenuOpen(false)} className="text-sm text-rim hover:text-white font-semibold">Nuevo candidato</NavLink>
                     <NavLink to="/visitas" onClick={() => setMenuOpen(false)} className="text-sm text-rim hover:text-white font-semibold">Visitas</NavLink>
                     <NavLink to="/nueva-visita" onClick={() => setMenuOpen(false)} className="text-sm text-rim hover:text-white font-semibold">Nueva visita</NavLink>
                   </>
+                ) : (
+                  <NavLink to="/mis-solicitudes" onClick={() => setMenuOpen(false)} className="text-sm text-rim hover:text-white font-semibold">Mis solicitudes</NavLink>
                 )}
                 <NavLink to="/adopciones" onClick={() => setMenuOpen(false)} className="text-sm text-rim hover:text-white font-semibold">Adopciones</NavLink>
                 <button onClick={handleLogout} className="text-sm text-red-400 hover:text-red-300 text-left font-semibold">Cerrar sesión</button>

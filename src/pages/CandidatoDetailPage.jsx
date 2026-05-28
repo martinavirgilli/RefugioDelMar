@@ -83,8 +83,11 @@ export default function CandidatoDetailPage() {
             }}
           />
           <p className="text-glacial mb-3 leading-relaxed">{candidato.descripcion}</p>
-          <p className="text-deep font-medium">Edad: <span className="text-glacial font-normal">{candidato.edad} años</span></p>
+          <p className="text-deep font-medium">Edad: <span className="text-glacial font-normal">{candidato.edad === 0 ? "Menos de 1 año" : `${candidato.edad} ${candidato.edad === 1 ? "año" : "años"}`}</span></p>
           <p className="text-deep font-medium">Especie: <span className="text-glacial font-normal capitalize">{candidato.especie}</span></p>
+          {candidato.genero && (
+            <p className="text-deep font-medium">Género: <span className="text-glacial font-normal capitalize">{candidato.genero}</span></p>
+          )}
         </div>
       </div>
     </Layout>

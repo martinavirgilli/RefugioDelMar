@@ -20,6 +20,7 @@ export default function NuevoCandidatoPage() {
   const [form, setForm] = useState({
     nombre: "",
     especie: "",
+    genero: "desconocido",
     edad: "",
     descripcion: "",
     imagen: "",
@@ -65,6 +66,21 @@ export default function NuevoCandidatoPage() {
 
           <Input label="Nombre"       value={form.nombre}      onChange={handleChange} name="nombre"      required />
           <Input label="Especie"      value={form.especie}     onChange={handleChange} name="especie"     required />
+
+          <div className="flex flex-col gap-1">
+            <label className="text-xs font-semibold text-deep">Género</label>
+            <select
+              name="genero"
+              value={form.genero}
+              onChange={handleChange}
+              className="border border-rim px-3 py-2 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-forest focus:border-forest bg-snowmelt text-deep"
+            >
+              <option value="macho">Macho</option>
+              <option value="hembra">Hembra</option>
+              <option value="desconocido">Desconocido</option>
+            </select>
+          </div>
+
           <Input label="Edad"         type="number" value={form.edad} onChange={handleChange} name="edad" required />
           <Input label="Descripción"  value={form.descripcion} onChange={handleChange} name="descripcion" required />
           <Input label="Imagen (URL)" value={form.imagen}      onChange={handleChange} name="imagen" />

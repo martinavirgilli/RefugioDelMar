@@ -1,9 +1,10 @@
 """
-ViewSet for the Visita resource.
+ViewSets for the Visita and SolicitudVisita resources.
 
-All operations are restricted to admin users (is_staff or is_superuser).
-The list endpoint only returns future visits — past ones are not shown
-in the UI but remain in the database for record-keeping.
+Visita — admin-only CRUD for manually scheduled visits.
+SolicitudVisita — any authenticated user can create; list returns all for admins
+                  and only the user's own records for regular users;
+                  accept/reject actions are admin-only.
 """
 
 from rest_framework import viewsets, status
@@ -14,8 +15,8 @@ from django.shortcuts import get_object_or_404
 from django.utils import timezone
 import logging
 
-from .models import Visita
-from .serializers import VisitaSerializer
+from .models import Visita, SolicitudVisita
+from .serializers import VisitaSerializer, SolicitudVisitaSerializer
 from apps.auth_app.permissions import IsAdmin
 
 logger = logging.getLogger('apps.visitas')
@@ -23,10 +24,10 @@ logger = logging.getLogger('apps.visitas')
 
 class VisitaViewSet(viewsets.ModelViewSet):
     """
-    Provides CRUD endpoints for Visita objects.
+    CRUD endpoints for manually-created Visita objects.
 
-    All write operations and listing are restricted to admin users.
-    Regular authenticated users receive a 403 for any endpoint in this ViewSet.
+    All operations are restricted to admin users.
+    Regular authenticated users receive 403 for every endpoint here.
     """
 
     queryset = Visita.objects.all()
@@ -131,3 +132,75 @@ class VisitaViewSet(viewsets.ModelViewSet):
                 {'error': 'Error adding comment'},
                 status=status.HTTP_500_INTERNAL_SERVER_ERROR
             )
+
+
+class SolicitudVisitaViewSet(viewsets.ModelViewSet):
+    """
+    Endpoints for visit requests submitted by regular users.
+
+    - list/retrieve: admin sees all; regular users see only their own.
+    - create: any authenticated user.
+    - aceptar / rechazar: admin-only custom PATCH actions.
+    """
+
+    serializer_class = SolicitudVisitaSerializer
+    permission_classes = [IsAuthenticated]
+    http_method_names = ['get', 'post', 'patch', 'head', 'options']
+
+    def get_queryset(self):
+        """Admins see all requests; regular users see only their own."""
+        user = self.request.user
+        if user.is_staff or user.is_superuser:
+            return SolicitudVisita.objects.select_related('candidato', 'usuario').all()
+        return SolicitudVisita.objects.select_related('candidato', 'usuario').filter(usuario=user)
+
+    def perform_create(self, serializer):
+        """Attach the requesting user automatically."""
+        serializer.save(usuario=self.request.user)
+
+    def create(self, request, *args, **kwargs):
+        """Submit a new visit request. Any authenticated user."""
+        try:
+            serializer = self.get_serializer(data=request.data)
+            serializer.is_valid(raise_exception=True)
+            self.perform_create(serializer)
+            logger.info(f"Visit request created by {request.user} for candidato {request.data.get('candidato')}")
+            return Response(serializer.data, status=status.HTTP_201_CREATED)
+        except Exception as e:
+            logger.error(f"Error creating visit request: {str(e)}")
+            return Response(
+                {'error': 'Error creating visit request', 'details': str(e)},
+                status=status.HTTP_400_BAD_REQUEST
+            )
+
+    @action(detail=True, methods=['patch'])
+    def aceptar(self, request, pk=None):
+        """Accept a visit request and set the visit date. Admin only."""
+        if not (request.user.is_staff or request.user.is_superuser):
+            return Response({'error': 'Only admins can accept requests'}, status=status.HTTP_403_FORBIDDEN)
+
+        solicitud = get_object_or_404(SolicitudVisita, pk=pk)
+        fecha_visita = request.data.get('fecha_visita')
+
+        if not fecha_visita:
+            return Response({'error': 'fecha_visita is required to accept a request'}, status=status.HTTP_400_BAD_REQUEST)
+
+        solicitud.estado = 'aceptada'
+        solicitud.fecha_visita = fecha_visita
+        solicitud.save()
+
+        logger.info(f"Visit request {pk} accepted by {request.user} — date: {fecha_visita}")
+        return Response(self.get_serializer(solicitud).data)
+
+    @action(detail=True, methods=['patch'])
+    def rechazar(self, request, pk=None):
+        """Reject a visit request. Admin only."""
+        if not (request.user.is_staff or request.user.is_superuser):
+            return Response({'error': 'Only admins can reject requests'}, status=status.HTTP_403_FORBIDDEN)
+
+        solicitud = get_object_or_404(SolicitudVisita, pk=pk)
+        solicitud.estado = 'rechazada'
+        solicitud.save()
+
+        logger.info(f"Visit request {pk} rejected by {request.user}")
+        return Response(self.get_serializer(solicitud).data)

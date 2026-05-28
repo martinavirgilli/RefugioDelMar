@@ -343,3 +343,92 @@ export const visitasService = {
     return response.json();
   },
 };
+
+
+// ---------------------------------------------------------------------------
+// Solicitudes de visita service
+// ---------------------------------------------------------------------------
+
+export const solicitudesService = {
+  /**
+   * Fetch visit requests.
+   * Admins receive all requests; regular users receive only their own.
+   */
+  getAll: async () => {
+    const response = await apiRequest("/api/visitas/solicitudes/", { method: "GET" });
+
+    if (!response.ok) {
+      try {
+        const error = await response.json();
+        throw new Error(error.error || error.message || error.detail || "Error fetching requests");
+      } catch (parseError) {
+        throw new Error(`Error ${response.status}: ${response.statusText}`);
+      }
+    }
+
+    const data = await response.json();
+    return Array.isArray(data) ? data : (data.results || data);
+  },
+
+  /** Submit a new visit request. Any authenticated user. */
+  create: async (solicitud) => {
+    const response = await apiRequest("/api/visitas/solicitudes/", {
+      method: "POST",
+      body: JSON.stringify(solicitud),
+    });
+
+    if (!response.ok) {
+      try {
+        const error = await response.json();
+        const firstField = Object.keys(error).find(
+          (k) => Array.isArray(error[k]) && error[k].length > 0
+        );
+        if (firstField) throw new Error(Array.isArray(error[firstField]) ? error[firstField][0] : error[firstField]);
+        throw new Error(error.error || error.message || error.detail || "Error submitting request");
+      } catch (parseError) {
+        if (parseError instanceof Error && parseError.message) throw parseError;
+        throw new Error(`Error ${response.status}: ${response.statusText}`);
+      }
+    }
+
+    return response.json();
+  },
+
+  /** Accept a visit request and set the visit date. Admin only. */
+  aceptar: async (id, fecha_visita) => {
+    const response = await apiRequest(`/api/visitas/solicitudes/${id}/aceptar/`, {
+      method: "PATCH",
+      body: JSON.stringify({ fecha_visita }),
+    });
+
+    if (!response.ok) {
+      try {
+        const error = await response.json();
+        throw new Error(error.error || error.message || error.detail || "Error accepting request");
+      } catch (parseError) {
+        throw new Error(`Error ${response.status}: ${response.statusText}`);
+      }
+    }
+
+    return response.json();
+  },
+
+  /** Reject a visit request. Admin only. */
+  rechazar: async (id) => {
+    const response = await apiRequest(`/api/visitas/solicitudes/${id}/rechazar/`, {
+      method: "PATCH",
+      body: JSON.stringify({}),
+    });
+
+    if (!response.ok) {
+      try {
+        const error = await response.json();
+        throw new Error(error.error || error.message || error.detail || "Error rejecting request");
+      } catch (parseError) {
+        throw new Error(`Error ${response.status}: ${response.statusText}`);
+      }
+    }
+
+    return response.json();
+  },
+};

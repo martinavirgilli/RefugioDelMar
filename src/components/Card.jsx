@@ -10,8 +10,11 @@
 
 import { Link } from "react-router-dom";
 import Button from "./Button";
+import { useAuth } from "../context/AuthContext";
 
-export default function Card({ candidato, onToggle, onDelete }) {
+export default function Card({ candidato, onToggle, onDelete, onSolicitar }) {
+  const { isAdmin } = useAuth();
+  const admin = isAdmin();
   return (
     <div className="bg-snowmelt rounded-2xl border border-rim/50 shadow-sm hover:shadow-md transition-shadow duration-200 overflow-hidden flex flex-col">
 
@@ -48,13 +51,12 @@ export default function Card({ candidato, onToggle, onDelete }) {
       <div className="flex flex-col flex-1 p-4 gap-2">
         <div>
           <h2 className="text-base font-bold text-deep">{candidato.nombre}</h2>
-          {candidato.edad !== undefined && (
-            <p className="text-xs text-glacial mt-0.5">
-              {candidato.edad === 0
-                ? "Menos de 1 año"
-                : `${candidato.edad} ${candidato.edad === 1 ? "año" : "años"}`}
-            </p>
-          )}
+          <p className="text-xs text-glacial mt-0.5">
+            {candidato.edad === 0 ? "Menos de 1 año" : `${candidato.edad} ${candidato.edad === 1 ? "año" : "años"}`}
+            {candidato.genero && candidato.genero !== "desconocido" && (
+              <span className="ml-1 capitalize">· {candidato.genero}</span>
+            )}
+          </p>
         </div>
 
         {/* Description is clamped to 3 lines to keep cards uniform in height */}
@@ -69,26 +71,42 @@ export default function Card({ candidato, onToggle, onDelete }) {
               Ver detalles
             </Button>
           </Link>
-          <Button
-            variant={candidato.adoptado ? "secondary" : "primary"}
-            className="flex-1 text-xs py-1.5"
-            onClick={() => onToggle && onToggle(candidato.id)}
-          >
-            {candidato.adoptado ? "Revertir" : "Adoptar"}
-          </Button>
-          {/* Delete button is only shown when the parent passes an onDelete handler */}
-          {onDelete && (
-            <Button
-              variant="danger"
-              className="text-xs py-1.5 px-3"
-              onClick={() => {
-                if (window.confirm(`¿Seguro que querés eliminar a ${candidato.nombre}?`)) {
-                  onDelete(candidato.id);
-                }
-              }}
-            >
-              Eliminar
-            </Button>
+
+          {admin ? (
+            // Admin: adopt/revert toggle + delete
+            <>
+              <Button
+                variant={candidato.adoptado ? "secondary" : "primary"}
+                className="flex-1 text-xs py-1.5"
+                onClick={() => onToggle && onToggle(candidato.id)}
+              >
+                {candidato.adoptado ? "Revertir" : "Adoptar"}
+              </Button>
+              {onDelete && (
+                <Button
+                  variant="danger"
+                  className="text-xs py-1.5 px-3"
+                  onClick={() => {
+                    if (window.confirm(`¿Seguro que querés eliminar a ${candidato.nombre}?`)) {
+                      onDelete(candidato.id);
+                    }
+                  }}
+                >
+                  Eliminar
+                </Button>
+              )}
+            </>
+          ) : (
+            // Regular user: request a visit (only for non-adopted animals)
+            !candidato.adoptado && (
+              <Button
+                variant="primary"
+                className="flex-1 text-xs py-1.5"
+                onClick={() => onSolicitar && onSolicitar(candidato)}
+              >
+                Solicitar visita
+              </Button>
+            )
           )}
         </div>
       </div>
