@@ -15,18 +15,18 @@ export default function Card({ candidato, onToggle, onDelete }) {
   return (
     <div className="bg-snowmelt rounded-2xl border border-rim/50 shadow-sm hover:shadow-md transition-shadow duration-200 overflow-hidden flex flex-col">
 
-      {/* ── Image section ── */}
-      <div className="relative w-full aspect-video bg-rim/30">
+      {/* ── Image section — natural height so tall/wide images are never cropped ── */}
+      <div className="relative w-full bg-rim/30">
         {candidato.imagen ? (
           <img
             src={candidato.imagen}
             alt={candidato.nombre}
-            className="w-full h-full object-cover"
+            className="w-full h-auto block"
             onError={(e) => { e.target.style.display = "none"; }}
           />
         ) : (
           // Placeholder shown when no image URL is available
-          <div className="w-full h-full flex items-center justify-center">
+          <div className="h-48 flex items-center justify-center">
             <span className="text-5xl opacity-20">🐾</span>
           </div>
         )}
