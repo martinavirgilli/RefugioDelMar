@@ -184,14 +184,15 @@ export default function CandidatosPage() {
           description="Ningún candidato coincide con los filtros seleccionados."
         />
       ) : (
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
+        <div className="columns-1 sm:columns-2 lg:columns-3 gap-6">
           {filtered.map((c) => (
-            <Card
-              key={c.id}
-              candidato={c}
-              onToggle={handleToggleAdopcion}
-              onDelete={handleDelete}
-            />
+            <div key={c.id} className="mb-6 break-inside-avoid">
+              <Card
+                candidato={c}
+                onToggle={handleToggleAdopcion}
+                onDelete={handleDelete}
+              />
+            </div>
           ))}
         </div>
       )}

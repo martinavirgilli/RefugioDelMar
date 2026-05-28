@@ -76,7 +76,7 @@ export default function CandidatoDetailPage() {
           <img
             src={candidato.imagen}
             alt={candidato.nombre}
-            className="rounded-xl h-60 w-full object-cover mx-auto mb-4 shadow-sm"
+            className="rounded-xl w-auto max-w-full h-auto max-h-[500px] object-contain mx-auto mb-4 shadow-sm block"
             onError={(e) => {
               // Fall back to a local placeholder if the remote image fails to load
               e.target.src = "/images/default.jpg";
