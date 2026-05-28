@@ -99,14 +99,9 @@ WSGI_APPLICATION = 'refugio_api.wsgi.application'
 # ---------------------------------------------------------------------------
 
 DATABASES = {
-    'default': {
-        'ENGINE': 'django.db.backends.postgresql',
-        'NAME': env('DB_NAME', default='refugio_db'),
-        'USER': env('DB_USER', default='refugio_user'),
-        'PASSWORD': env('DB_PASSWORD', default='refugio_pass'),
-        'HOST': env('DB_HOST', default='localhost'),
-        'PORT': env('DB_PORT', default='5432'),
-    }
+    # DATABASE_URL takes priority (Render sets this automatically when you link a Postgres DB).
+    # Falls back to individual vars for local development.
+    'default': env.db('DATABASE_URL', default='postgresql://refugio_user:refugio_pass@localhost:5432/refugio_db')
 }
 
 # ---------------------------------------------------------------------------
