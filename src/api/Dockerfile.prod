@@ -1,0 +1,57 @@
+# Dockerfile de producción para Railway
+# Etapa 1: Construir el frontend React
+FROM node:20-alpine AS frontend-build
+
+WORKDIR /app
+
+# Copiar archivos del frontend
+COPY package*.json ./
+COPY vite.config.js ./
+COPY index.html ./
+COPY src/ ./src/
+COPY public/ ./public/
+
+# Instalar dependencias y construir
+RUN npm ci
+RUN npm run build
+
+# Etapa 2: Backend Django
+FROM python:3.11-slim
+
+# Establecer directorio de trabajo
+WORKDIR /app
+
+# Variables de entorno
+ENV PYTHONDONTWRITEBYTECODE=1
+ENV PYTHONUNBUFFERED=1
+
+# Instalar dependencias del sistema para MySQL
+RUN apt-get update && apt-get install -y \
+    default-libmysqlclient-dev \
+    build-essential \
+    pkg-config \
+    && rm -rf /var/lib/apt/lists/*
+
+# Copiar requirements y instalar dependencias Python
+COPY src/api/requirements.txt .
+RUN pip install --no-cache-dir -r requirements.txt
+
+# Copiar el código de la aplicación Django
+COPY src/api/ .
+
+# Copiar los archivos construidos del frontend
+COPY --from=frontend-build /app/dist /app/frontend
+
+# Recolectar archivos estáticos
+RUN python manage.py collectstatic --noinput || true
+
+# Copiar y hacer ejecutable el script de inicio
+COPY src/api/start.sh /app/start.sh
+RUN chmod +x /app/start.sh
+
+# Exponer puerto (Railway usa el puerto de la variable PORT)
+EXPOSE 8000
+
+# Comando de inicio usando el script
+CMD ["/app/start.sh"]
+

@@ -1,0 +1,79 @@
+/**
+ * NuevoCandidatoPage — form to register a new shelter candidate.
+ *
+ * Admin-only page (enforced by ProtectedAdminRoute in App.jsx).
+ * On success, navigates back to the candidates list.
+ */
+
+import Layout from "../components/Layout";
+import Input from "../components/Input";
+import Button from "../components/Button";
+import { useState } from "react";
+import { useNavigate } from "react-router-dom";
+import { candidatosService } from "../services/api";
+
+export default function NuevoCandidatoPage() {
+  const navigate = useNavigate();
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState("");
+
+  const [form, setForm] = useState({
+    nombre: "",
+    especie: "",
+    edad: "",
+    descripcion: "",
+    imagen: "",
+  });
+
+  /** Generic change handler — updates the matching field in the form state. */
+  const handleChange = (e) =>
+    setForm({ ...form, [e.target.name]: e.target.value });
+
+  const handleSubmit = async (e) => {
+    e.preventDefault();
+    setError("");
+    setLoading(true);
+
+    try {
+      await candidatosService.create({
+        ...form,
+        edad: parseInt(form.edad) || 0, // Parse age to integer; default to 0 if empty
+        adoptado: false,                 // New candidates always start as available
+      });
+      navigate("/candidatos");
+    } catch (err) {
+      setError(err.message || "Error creating candidate");
+      setLoading(false);
+    }
+  };
+
+  return (
+    <Layout>
+      <div className="flex flex-col items-center justify-center min-h-[70vh]">
+        <h1 className="text-3xl font-bold mb-6 text-center text-deep">
+          Register New Candidate
+        </h1>
+        <form
+          onSubmit={handleSubmit}
+          className="w-full max-w-md bg-snowmelt shadow-lg rounded-2xl p-6 space-y-4 border border-rim"
+        >
+          {error && (
+            <div className="bg-red-50 border border-red-200 text-red-700 px-4 py-3 rounded-lg text-sm">
+              {error}
+            </div>
+          )}
+
+          <Input label="Name"        value={form.nombre}      onChange={handleChange} name="nombre"      required />
+          <Input label="Species"     value={form.especie}     onChange={handleChange} name="especie"     required />
+          <Input label="Age"         type="number" value={form.edad} onChange={handleChange} name="edad" required />
+          <Input label="Description" value={form.descripcion} onChange={handleChange} name="descripcion" required />
+          <Input label="Image (URL)" value={form.imagen}      onChange={handleChange} name="imagen" />
+
+          <Button type="submit" className="w-full" disabled={loading}>
+            {loading ? "Creating..." : "Add Candidate"}
+          </Button>
+        </form>
+      </div>
+    </Layout>
+  );
+}

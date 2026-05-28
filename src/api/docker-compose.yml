@@ -1,0 +1,39 @@
+services:
+  db:
+    image: mysql:8.0
+    container_name: refugio_db
+    environment:
+      MYSQL_DATABASE: ${DB_NAME:-refugio_db}
+      MYSQL_USER: ${DB_USER:-refugio_user}
+      MYSQL_PASSWORD: ${DB_PASSWORD:-refugio_pass}
+      MYSQL_ROOT_PASSWORD: ${DB_ROOT_PASSWORD:-root_password}
+    volumes:
+      - mysql_data:/var/lib/mysql
+    ports:
+      - "3306:3306"
+    healthcheck:
+      test: ["CMD", "mysqladmin", "ping", "-h", "localhost", "-u", "root", "-p${DB_ROOT_PASSWORD:-root_password}"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  web:
+    build: .
+    container_name: refugio_api
+    command: python manage.py runserver 0.0.0.0:8000
+    volumes:
+      - .:/app
+    ports:
+      - "8000:8000"
+    env_file:
+      - .env
+    depends_on:
+      db:
+        condition: service_healthy
+    environment:
+      - DB_HOST=db
+      - DB_PORT=3306
+
+volumes:
+  mysql_data:
+

@@ -1,0 +1,25 @@
+# Core Django framework and REST API
+Django==5.0.1
+djangorestframework==3.14.0
+
+# JWT authentication for the API
+djangorestframework-simplejwt==5.3.1
+
+# CORS headers to allow requests from the React frontend
+django-cors-headers==4.3.1
+
+# PostgreSQL adapter (active — used for Render deployment)
+psycopg2-binary==2.9.9
+
+# MySQL adapter (inactive — uncomment and remove psycopg2-binary to switch back to MySQL)
+# mysqlclient==2.2.0
+
+# Environment variable management
+python-decouple==3.8
+django-environ==0.11.2
+
+# Production WSGI server
+gunicorn==21.2.0
+
+# Serves static files efficiently in production without a separate web server
+whitenoise==6.6.0
