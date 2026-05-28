@@ -9,7 +9,8 @@ djangorestframework-simplejwt==5.3.1
 django-cors-headers==4.3.1
 
 # PostgreSQL adapter (active — used for Render deployment)
-psycopg2-binary==2.9.9
+# psycopg2-binary==2.9.9  ← use this if on Python 3.12 or below
+psycopg[binary]==3.2.4
 
 # MySQL adapter (inactive — uncomment and remove psycopg2-binary to switch back to MySQL)
 # mysqlclient==2.2.0
