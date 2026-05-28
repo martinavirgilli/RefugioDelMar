@@ -9,7 +9,7 @@
 
 import { Link } from "react-router-dom";
 import Layout from "../components/Layout";
-import portada from "../assets/images/portada.jpg";
+import portada from "../assets/images/portada.png";
 import { useAuth } from "../context/AuthContext";
 
 /** A card displaying one of the shelter's mission pillars. */
