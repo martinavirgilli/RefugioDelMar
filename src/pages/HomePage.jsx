@@ -42,7 +42,7 @@ export default function HomePage() {
             Bienvenido a Refugio del Mar
           </h1>
           <p className="text-rim mt-2 text-sm sm:text-base max-w-md drop-shadow">
-            Donde cada animal espera un hogar
+            Un hogar para cada patita
           </p>
         </div>
       </div>
