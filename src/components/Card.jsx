@@ -65,7 +65,7 @@ export default function Card({ candidato, onToggle, onDelete, onSolicitar }) {
         </p>
 
         {/* ── Action buttons ── */}
-        <div className="flex gap-2 flex-wrap pt-2">
+        <div className="flex gap-2 pt-2">
           <Link to={`/candidatos/${candidato.id}`} className="flex-1">
             <Button variant="secondary" className="w-full text-xs py-1.5">
               Ver detalles
