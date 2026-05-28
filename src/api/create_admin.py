@@ -17,11 +17,11 @@ django.setup()
 
 from django.contrib.auth.models import User
 
-# ---- Admin credentials — change these before deploying ----
-USERNAME = 'admin'
-EMAIL = 'admin@refugio.com'
-PASSWORD = 'admin123'
-# -----------------------------------------------------------
+# Credentials are read from environment variables so they are never hardcoded.
+# Set ADMIN_USERNAME, ADMIN_EMAIL, and ADMIN_PASSWORD in your hosting environment.
+USERNAME = os.environ.get('ADMIN_USERNAME', 'admin')
+EMAIL    = os.environ.get('ADMIN_EMAIL',    'admin@refugio.com')
+PASSWORD = os.environ.get('ADMIN_PASSWORD', 'admin123')
 
 if User.objects.filter(username=USERNAME).exists():
     # If the user already exists, ensure they have admin privileges
