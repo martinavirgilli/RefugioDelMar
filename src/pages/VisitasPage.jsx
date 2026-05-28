@@ -36,7 +36,11 @@ export default function VisitasPage() {
       setVisitas(Array.isArray(visitasData) ? visitasData : []);
       setSolicitudes(Array.isArray(solicitudesData) ? solicitudesData : []);
     } catch (err) {
-      setError(err.message || "Error al cargar los datos");
+      if (err.message?.includes("404")) {
+        setSolicitudes([]);
+      } else {
+        setError(err.message || "Error al cargar los datos");
+      }
     } finally {
       setLoading(false);
     }

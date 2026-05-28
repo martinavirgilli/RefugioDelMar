@@ -33,7 +33,11 @@ export default function MisSolicitudesPage() {
       const data = await solicitudesService.getAll();
       setSolicitudes(Array.isArray(data) ? data : []);
     } catch (err) {
-      setError(err.message || "Error al cargar tus solicitudes");
+      if (err.message?.includes("404")) {
+        setSolicitudes([]);
+      } else {
+        setError(err.message || "Error al cargar tus solicitudes");
+      }
     } finally {
       setLoading(false);
     }

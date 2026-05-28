@@ -9,6 +9,6 @@ solicitudes_router = DefaultRouter()
 solicitudes_router.register(r'', SolicitudVisitaViewSet, basename='solicitud')
 
 urlpatterns = [
-    path('', include(visitas_router.urls)),
     path('solicitudes/', include(solicitudes_router.urls)),
+    path('', include(visitas_router.urls)),
 ]
