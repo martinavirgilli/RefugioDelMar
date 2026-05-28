@@ -62,24 +62,24 @@ export default function Layout({ children }) {
           <nav className="hidden md:flex items-center gap-6">
             {authed ? (
               <>
-                <NavItem to="/">Home</NavItem>
-                <NavItem to="/candidatos">Candidates</NavItem>
+                <NavItem to="/">Inicio</NavItem>
+                <NavItem to="/candidatos">Candidatos</NavItem>
                 {isAdmin() && (
                   <>
-                    <NavItem to="/nuevo">New Candidate</NavItem>
-                    <NavItem to="/visitas">Visits</NavItem>
-                    <NavItem to="/nueva-visita">New Visit</NavItem>
+                    <NavItem to="/nuevo">Nuevo candidato</NavItem>
+                    <NavItem to="/visitas">Visitas</NavItem>
+                    <NavItem to="/nueva-visita">Nueva visita</NavItem>
                   </>
                 )}
-                <NavItem to="/adopciones">Adoptions</NavItem>
+                <NavItem to="/adopciones">Adopciones</NavItem>
                 {/* Display the logged-in user's email */}
                 <span className="text-xs text-rim ml-2">{user?.email || user?.name}</span>
                 <Button onClick={handleLogout} variant="secondary" className="py-1 px-3 text-xs">
-                  Log Out
+                  Cerrar sesión
                 </Button>
               </>
             ) : (
-              <NavItem to="/login">Log In</NavItem>
+              <NavItem to="/login">Iniciar sesión</NavItem>
             )}
           </nav>
 
@@ -104,20 +104,20 @@ export default function Layout({ children }) {
           <div className="md:hidden mt-3 pb-3 border-t border-glacial/30 flex flex-col gap-3 pt-3">
             {authed ? (
               <>
-                <NavLink to="/" onClick={() => setMenuOpen(false)} className="text-sm text-rim hover:text-white font-semibold">Home</NavLink>
-                <NavLink to="/candidatos" onClick={() => setMenuOpen(false)} className="text-sm text-rim hover:text-white font-semibold">Candidates</NavLink>
+                <NavLink to="/" onClick={() => setMenuOpen(false)} className="text-sm text-rim hover:text-white font-semibold">Inicio</NavLink>
+                <NavLink to="/candidatos" onClick={() => setMenuOpen(false)} className="text-sm text-rim hover:text-white font-semibold">Candidatos</NavLink>
                 {isAdmin() && (
                   <>
-                    <NavLink to="/nuevo" onClick={() => setMenuOpen(false)} className="text-sm text-rim hover:text-white font-semibold">New Candidate</NavLink>
-                    <NavLink to="/visitas" onClick={() => setMenuOpen(false)} className="text-sm text-rim hover:text-white font-semibold">Visits</NavLink>
-                    <NavLink to="/nueva-visita" onClick={() => setMenuOpen(false)} className="text-sm text-rim hover:text-white font-semibold">New Visit</NavLink>
+                    <NavLink to="/nuevo" onClick={() => setMenuOpen(false)} className="text-sm text-rim hover:text-white font-semibold">Nuevo candidato</NavLink>
+                    <NavLink to="/visitas" onClick={() => setMenuOpen(false)} className="text-sm text-rim hover:text-white font-semibold">Visitas</NavLink>
+                    <NavLink to="/nueva-visita" onClick={() => setMenuOpen(false)} className="text-sm text-rim hover:text-white font-semibold">Nueva visita</NavLink>
                   </>
                 )}
-                <NavLink to="/adopciones" onClick={() => setMenuOpen(false)} className="text-sm text-rim hover:text-white font-semibold">Adoptions</NavLink>
-                <button onClick={handleLogout} className="text-sm text-red-400 hover:text-red-300 text-left font-semibold">Log Out</button>
+                <NavLink to="/adopciones" onClick={() => setMenuOpen(false)} className="text-sm text-rim hover:text-white font-semibold">Adopciones</NavLink>
+                <button onClick={handleLogout} className="text-sm text-red-400 hover:text-red-300 text-left font-semibold">Cerrar sesión</button>
               </>
             ) : (
-              <NavLink to="/login" onClick={() => setMenuOpen(false)} className="text-sm text-rim hover:text-white font-semibold">Log In</NavLink>
+              <NavLink to="/login" onClick={() => setMenuOpen(false)} className="text-sm text-rim hover:text-white font-semibold">Iniciar sesión</NavLink>
             )}
           </div>
         )}
@@ -130,7 +130,7 @@ export default function Layout({ children }) {
 
       {/* ── Footer ── */}
       <footer className="bg-deep text-rim text-center py-4 text-sm">
-        © {new Date().getFullYear()} Refugio del Mar — All rights reserved
+        © {new Date().getFullYear()} Refugio del Mar — Todos los derechos reservados
       </footer>
 
     </div>

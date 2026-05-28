@@ -39,7 +39,7 @@ export default function CandidatoDetailPage() {
         <div className="flex items-center justify-center min-h-[50vh]">
           <div className="flex flex-col items-center gap-3 text-glacial">
             <span className="text-4xl animate-pulse">🐾</span>
-            <span className="text-sm font-medium">Loading...</span>
+            <span className="text-sm font-medium">Cargando...</span>
           </div>
         </div>
       </Layout>
@@ -53,10 +53,10 @@ export default function CandidatoDetailPage() {
           to="/candidatos"
           className="inline-block px-4 py-2 bg-glacial text-white rounded-lg shadow hover:bg-glacial-dark mb-4 text-sm font-semibold"
         >
-          ← Back to candidates
+          ← Volver a candidatos
         </Link>
         <div className="bg-red-50 border border-red-200 text-red-700 px-4 py-3 rounded-lg text-sm">
-          {error || "Candidate not found."}
+          {error || "Candidato no encontrado."}
         </div>
       </Layout>
     );
@@ -68,7 +68,7 @@ export default function CandidatoDetailPage() {
         to="/candidatos"
         className="inline-block px-4 py-2 bg-glacial text-white rounded-lg shadow hover:bg-glacial-dark mb-6 text-sm font-semibold transition-colors"
       >
-        ← Back to candidates
+        ← Volver a candidatos
       </Link>
       <div className="flex justify-center">
         <div className="max-w-md w-full bg-snowmelt shadow-lg p-6 rounded-2xl text-center border border-rim">
@@ -83,8 +83,8 @@ export default function CandidatoDetailPage() {
             }}
           />
           <p className="text-glacial mb-3 leading-relaxed">{candidato.descripcion}</p>
-          <p className="text-deep font-medium">Age: <span className="text-glacial font-normal">{candidato.edad} years</span></p>
-          <p className="text-deep font-medium">Species: <span className="text-glacial font-normal capitalize">{candidato.especie}</span></p>
+          <p className="text-deep font-medium">Edad: <span className="text-glacial font-normal">{candidato.edad} años</span></p>
+          <p className="text-deep font-medium">Especie: <span className="text-glacial font-normal capitalize">{candidato.especie}</span></p>
         </div>
       </div>
     </Layout>

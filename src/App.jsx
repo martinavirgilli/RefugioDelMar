@@ -75,9 +75,9 @@ function App() {
               <Layout>
                 <EmptyState
                   title="404"
-                  description="This page does not exist."
+                  description="Esta página no existe."
                   action={
-                    <Link to="/"><Button>Go home</Button></Link>
+                    <Link to="/"><Button>Ir al inicio</Button></Link>
                   }
                 />
               </Layout>

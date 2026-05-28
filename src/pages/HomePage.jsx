@@ -39,53 +39,53 @@ export default function HomePage() {
         <div className="absolute inset-0 bg-gradient-to-t from-deep/80 via-deep/30 to-transparent" />
         <div className="absolute inset-0 flex flex-col items-center justify-end pb-10 px-6 text-center">
           <h1 className="text-3xl sm:text-4xl font-extrabold text-white drop-shadow-md leading-tight">
-            Welcome to Refugio del Mar
+            Bienvenido a Refugio del Mar
           </h1>
           <p className="text-rim mt-2 text-sm sm:text-base max-w-md drop-shadow">
-            Where every animal waits for a home
+            Donde cada animal espera un hogar
           </p>
         </div>
       </div>
 
       {/* ── Mission section ── */}
       <section className="mb-12">
-        <h2 className="text-2xl font-bold text-deep text-center mb-6">What we do</h2>
+        <h2 className="text-2xl font-bold text-deep text-center mb-6">Lo que hacemos</h2>
         <div className="grid grid-cols-1 sm:grid-cols-3 gap-5">
           <MissionCard
             icon="🤝"
-            title="Rescue"
-            description="We take in animals in vulnerable situations and provide them a safe space to recover."
+            title="Rescate"
+            description="Recibimos animales en situación de vulnerabilidad y les brindamos un lugar seguro para recuperarse."
           />
           <MissionCard
             icon="❤️"
-            title="Care"
-            description="Our team handles the health, nutrition, and well-being of every animal at the shelter."
+            title="Cuidado"
+            description="Nuestro equipo se ocupa de la salud, alimentación y bienestar de cada animal del refugio."
           />
           <MissionCard
             icon="🏠"
-            title="Adopt"
-            description="We connect each animal with a family that has been waiting for them. Every adoption is a love story."
+            title="Adopción"
+            description="Conectamos a cada animal con la familia que lo estaba esperando. Cada adopción es una historia de amor."
           />
         </div>
       </section>
 
       {/* ── Call-to-action ── */}
       <section className="bg-snowmelt rounded-2xl border border-rim shadow-sm p-8 text-center">
-        <h2 className="text-xl font-bold text-deep mb-2">Want to meet our candidates?</h2>
-        <p className="text-glacial text-sm mb-6">Discover the animals looking for a loving home.</p>
+        <h2 className="text-xl font-bold text-deep mb-2">¿Querés conocer a nuestros candidatos?</h2>
+        <p className="text-glacial text-sm mb-6">Descubrí los animales que buscan un hogar lleno de amor.</p>
         {isAuthenticated() ? (
           <Link
             to="/candidatos"
             className="inline-flex items-center gap-2 bg-forest hover:bg-forest-dark text-white font-semibold px-6 py-3 rounded-lg transition-colors shadow-sm"
           >
-            🐾 View candidates
+            🐾 Ver candidatos
           </Link>
         ) : (
           <Link
             to="/login"
             className="inline-flex items-center gap-2 bg-forest hover:bg-forest-dark text-white font-semibold px-6 py-3 rounded-lg transition-colors shadow-sm"
           >
-            Log in to view candidates
+            Iniciá sesión para ver los candidatos
           </Link>
         )}
       </section>

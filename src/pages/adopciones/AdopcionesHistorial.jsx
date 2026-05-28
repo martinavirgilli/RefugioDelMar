@@ -34,7 +34,7 @@ export default function AdopcionesHistorial() {
     return (
       <div className="flex flex-col items-center justify-center min-h-[40vh] gap-3 text-glacial">
         <span className="text-4xl animate-pulse">🐾</span>
-        <span className="text-sm font-medium">Loading history...</span>
+        <span className="text-sm font-medium">Cargando historial...</span>
       </div>
     );
   }
@@ -49,7 +49,7 @@ export default function AdopcionesHistorial() {
           onClick={loadHistorial}
           className="px-4 py-2 bg-glacial text-white rounded-lg hover:bg-glacial-dark text-sm font-semibold transition-colors"
         >
-          Retry
+          Reintentar
         </button>
       </div>
     );
@@ -59,7 +59,7 @@ export default function AdopcionesHistorial() {
     return (
       <div className="flex flex-col items-center justify-center min-h-[40vh]">
         <p className="text-glacial text-lg">
-          🐾 No adoptions recorded yet.
+          🐾 Aún no hay adopciones registradas.
         </p>
       </div>
     );
@@ -69,7 +69,7 @@ export default function AdopcionesHistorial() {
     <div className="flex flex-col items-center justify-center min-h-[40vh]">
       <div className="bg-snowmelt shadow-lg rounded-2xl p-8 w-full max-w-lg border border-rim">
         <h2 className="text-2xl font-bold mb-6 text-center text-glacial">
-          Adoption History
+          Historial de adopciones
         </h2>
         <ul className="space-y-3 text-lg text-deep">
           {historial.map((candidato) => (

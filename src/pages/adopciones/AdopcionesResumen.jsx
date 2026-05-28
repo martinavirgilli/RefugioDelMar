@@ -47,7 +47,7 @@ export default function AdopcionesResumen() {
     return (
       <div className="flex flex-col items-center justify-center min-h-[40vh] gap-3 text-glacial">
         <span className="text-4xl animate-pulse">🐾</span>
-        <span className="text-sm font-medium">Loading summary...</span>
+        <span className="text-sm font-medium">Cargando resumen...</span>
       </div>
     );
   }
@@ -62,7 +62,7 @@ export default function AdopcionesResumen() {
           onClick={loadResumen}
           className="px-4 py-2 bg-forest text-white rounded-lg hover:bg-forest-dark text-sm font-semibold transition-colors"
         >
-          Retry
+          Reintentar
         </button>
       </div>
     );
@@ -70,11 +70,11 @@ export default function AdopcionesResumen() {
 
   return (
     <div className="py-4">
-      <h2 className="text-xl font-extrabold text-deep mb-6 text-center">Adoption Summary</h2>
+      <h2 className="text-xl font-extrabold text-deep mb-6 text-center">Resumen de adopciones</h2>
       <div className="grid grid-cols-1 sm:grid-cols-3 gap-5 max-w-2xl mx-auto">
-        <StatCard icon="🐾" label="Total candidates" value={resumen?.total ?? 0} />
-        <StatCard icon="❤️" label="Adopted"          value={resumen?.adoptados ?? 0} accent />
-        <StatCard icon="🏠" label="Available"        value={resumen?.disponibles ?? 0} />
+        <StatCard icon="🐾" label="Total candidatos" value={resumen?.total ?? 0} />
+        <StatCard icon="❤️" label="Adoptados"        value={resumen?.adoptados ?? 0} accent />
+        <StatCard icon="🏠" label="Disponibles"      value={resumen?.disponibles ?? 0} />
       </div>
     </div>
   );

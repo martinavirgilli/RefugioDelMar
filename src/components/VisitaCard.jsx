@@ -37,7 +37,7 @@ export default function VisitaCard({ visita, onDelete, onUpdate }) {
   /** Submit the final comment, then refresh the visits list via onUpdate. */
   const handleAgregarComentario = async () => {
     if (!comentario.trim()) {
-      setError("Comment cannot be empty");
+      setError("El comentario no puede estar vacío");
       return;
     }
     setLoading(true);
@@ -48,7 +48,7 @@ export default function VisitaCard({ visita, onDelete, onUpdate }) {
       setComentario("");
       if (onUpdate) onUpdate();
     } catch (err) {
-      setError(err.message || "Error adding comment");
+      setError(err.message || "Error al agregar el comentario");
     } finally {
       setLoading(false);
     }
@@ -88,7 +88,7 @@ export default function VisitaCard({ visita, onDelete, onUpdate }) {
           {visita.candidato_detalle?.nombre || `ID ${visita.candidato}`}
         </p>
         <p className="text-glacial">
-          <span className="font-semibold text-deep">Date: </span>
+          <span className="font-semibold text-deep">Fecha: </span>
           {fechaFormateada}
         </p>
         {visita.notas && (
@@ -99,7 +99,7 @@ export default function VisitaCard({ visita, onDelete, onUpdate }) {
       {/* Final comment box — shown once an admin has completed the visit */}
       {visita.comentario_final && (
         <div className="bg-green-50 border border-green-100 rounded-lg p-3 mb-3">
-          <p className="text-xs font-semibold text-green-800 mb-1">Final comment</p>
+          <p className="text-xs font-semibold text-green-800 mb-1">Comentario final</p>
           <p className="text-sm text-green-700">{visita.comentario_final}</p>
         </div>
       )}
@@ -108,18 +108,18 @@ export default function VisitaCard({ visita, onDelete, onUpdate }) {
       {!visita.comentario_final && !showComentarioForm && (
         <div className="flex gap-2 mt-3">
           <Button variant="secondary" className="text-xs py-1.5" onClick={() => setShowComentarioForm(true)}>
-            Add comment
+            Agregar comentario
           </Button>
           <Button
             variant="danger"
             className="text-xs py-1.5"
             onClick={() => {
-              if (window.confirm(`Delete visit by ${visita.visitante_nombre}?`)) {
+              if (window.confirm(`¿Eliminar la visita de ${visita.visitante_nombre}?`)) {
                 onDelete && onDelete(visita.id);
               }
             }}
           >
-            Delete
+            Eliminar
           </Button>
         </div>
       )}
@@ -131,20 +131,20 @@ export default function VisitaCard({ visita, onDelete, onUpdate }) {
           <textarea
             value={comentario}
             onChange={(e) => setComentario(e.target.value)}
-            placeholder="Write your final notes about this visit..."
+            placeholder="Escribí las notas finales sobre esta visita..."
             className="w-full p-3 border border-rim rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-forest focus:border-forest resize-none bg-snowmelt"
             rows={3}
           />
           <div className="flex gap-2 mt-2">
             <Button className="text-xs py-1.5" onClick={handleAgregarComentario} disabled={loading}>
-              {loading ? "Saving..." : "Save"}
+              {loading ? "Guardando..." : "Guardar"}
             </Button>
             <Button
               variant="secondary"
               className="text-xs py-1.5"
               onClick={() => { setShowComentarioForm(false); setComentario(""); setError(""); }}
             >
-              Cancel
+              Cancelar
             </Button>
           </div>
         </div>

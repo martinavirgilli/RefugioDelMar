@@ -32,7 +32,7 @@ export default function RegisterPage() {
 
     // Client-side check before hitting the API
     if (password !== confirmPassword) {
-      setError("Passwords do not match");
+      setError("Las contraseñas no coinciden");
       return;
     }
 
@@ -42,7 +42,7 @@ export default function RegisterPage() {
     if (result.success) {
       navigate("/");
     } else {
-      setError(result.error || "Error creating account");
+      setError(result.error || "Error al crear la cuenta");
       setLoading(false);
     }
   };
@@ -55,8 +55,8 @@ export default function RegisterPage() {
           {/* Header */}
           <div className="text-center mb-6">
             <span className="text-5xl">🐾</span>
-            <h1 className="text-2xl font-extrabold text-deep mt-3">Create account</h1>
-            <p className="text-glacial text-sm mt-1">Sign up to explore the shelter</p>
+            <h1 className="text-2xl font-extrabold text-deep mt-3">Crear cuenta</h1>
+            <p className="text-glacial text-sm mt-1">Registrate para explorar el refugio</p>
           </div>
 
           <form onSubmit={handleSubmit} className="space-y-1">
@@ -67,11 +67,11 @@ export default function RegisterPage() {
             )}
 
             <Input
-              label="Name"
+              label="Nombre"
               type="text"
               value={name}
               onChange={(e) => setName(e.target.value)}
-              placeholder="Your name"
+              placeholder="Tu nombre"
             />
 
             <Input
@@ -80,37 +80,37 @@ export default function RegisterPage() {
               value={email}
               onChange={(e) => setEmail(e.target.value)}
               required
-              placeholder="you@email.com"
+              placeholder="vos@email.com"
             />
 
             <Input
-              label="Password"
+              label="Contraseña"
               type="password"
               value={password}
               onChange={(e) => setPassword(e.target.value)}
               required
-              placeholder="At least 6 characters"
+              placeholder="Mínimo 6 caracteres"
             />
 
             <Input
-              label="Confirm password"
+              label="Confirmar contraseña"
               type="password"
               value={confirmPassword}
               onChange={(e) => setConfirmPassword(e.target.value)}
               required
-              placeholder="Repeat your password"
+              placeholder="Repetí tu contraseña"
             />
 
             <Button type="submit" disabled={loading} className="w-full mt-2">
-              {loading ? "Creating account..." : "Sign Up"}
+              {loading ? "Creando cuenta..." : "Registrarse"}
             </Button>
           </form>
 
           {/* Link back to login for returning users */}
           <p className="mt-5 text-sm text-glacial text-center">
-            Already have an account?{" "}
+            ¿Ya tenés cuenta?{" "}
             <Link to="/login" className="text-forest font-semibold hover:underline">
-              Log in
+              Iniciá sesión
             </Link>
           </p>
 

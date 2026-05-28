@@ -85,7 +85,7 @@ export default function CandidatosPage() {
         <div className="flex items-center justify-center min-h-[50vh]">
           <div className="flex flex-col items-center gap-3 text-glacial">
             <span className="text-4xl animate-pulse">🐾</span>
-            <span className="text-sm font-medium">Loading candidates...</span>
+            <span className="text-sm font-medium">Cargando candidatos...</span>
           </div>
         </div>
       </Layout>
@@ -103,7 +103,7 @@ export default function CandidatosPage() {
             onClick={loadCandidatos}
             className="px-4 py-2 bg-forest text-white rounded-lg hover:bg-forest-dark text-sm font-semibold"
           >
-            Retry
+            Reintentar
           </button>
         </div>
       </Layout>
@@ -115,9 +115,9 @@ export default function CandidatosPage() {
       {/* ── Page header ── */}
       <div className="flex items-center justify-between mb-6">
         <div>
-          <h1 className="text-2xl font-extrabold text-deep">Candidates</h1>
+          <h1 className="text-2xl font-extrabold text-deep">Candidatos</h1>
           <p className="text-glacial text-sm mt-0.5">
-            Showing {filtered.length} of {candidatos.length} candidates
+            Mostrando {filtered.length} de {candidatos.length} candidatos
           </p>
         </div>
       </div>
@@ -127,25 +127,25 @@ export default function CandidatosPage() {
 
         {/* Name search */}
         <div className="flex flex-col gap-1 flex-1 min-w-[160px]">
-          <label className="text-xs font-semibold text-deep">Search by name</label>
+          <label className="text-xs font-semibold text-deep">Buscar por nombre</label>
           <input
             type="text"
             value={search}
             onChange={(e) => setSearch(e.target.value)}
-            placeholder="E.g. Max, Luna..."
+            placeholder="Ej: Max, Luna..."
             className="border border-rim px-3 py-2 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-forest focus:border-forest transition-colors bg-snowmelt placeholder:text-glacial/60"
           />
         </div>
 
         {/* Species filter */}
         <div className="flex flex-col gap-1 min-w-[140px]">
-          <label className="text-xs font-semibold text-deep">Species</label>
+          <label className="text-xs font-semibold text-deep">Especie</label>
           <select
             value={especieFilter}
             onChange={(e) => setEspecieFilter(e.target.value)}
             className="border border-rim px-3 py-2 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-forest focus:border-forest bg-snowmelt text-deep"
           >
-            <option value="">All</option>
+            <option value="">Todas</option>
             {especies.map((e) => (
               <option key={e} value={e} className="capitalize">{e}</option>
             ))}
@@ -154,15 +154,15 @@ export default function CandidatosPage() {
 
         {/* Adoption status filter */}
         <div className="flex flex-col gap-1 min-w-[140px]">
-          <label className="text-xs font-semibold text-deep">Status</label>
+          <label className="text-xs font-semibold text-deep">Estado</label>
           <select
             value={estadoFilter}
             onChange={(e) => setEstadoFilter(e.target.value)}
             className="border border-rim px-3 py-2 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-forest focus:border-forest bg-snowmelt text-deep"
           >
-            <option value="todos">All</option>
-            <option value="disponibles">Available</option>
-            <option value="adoptados">Adopted</option>
+            <option value="todos">Todos</option>
+            <option value="disponibles">Disponibles</option>
+            <option value="adoptados">Adoptados</option>
           </select>
         </div>
 
@@ -172,7 +172,7 @@ export default function CandidatosPage() {
             onClick={() => { setSearch(""); setEspecieFilter(""); setEstadoFilter("todos"); }}
             className="text-xs text-glacial hover:text-deep font-semibold self-end pb-2"
           >
-            Clear filters ×
+            Limpiar filtros ×
           </button>
         )}
       </div>
@@ -180,8 +180,8 @@ export default function CandidatosPage() {
       {/* ── Candidates grid ── */}
       {filtered.length === 0 ? (
         <EmptyState
-          title="No results"
-          description="No candidates match the selected filters."
+          title="Sin resultados"
+          description="Ningún candidato coincide con los filtros seleccionados."
         />
       ) : (
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">

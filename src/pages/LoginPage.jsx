@@ -36,7 +36,7 @@ export default function LoginPage() {
     if (result.success) {
       navigate(from, { replace: true });
     } else {
-      setError(result.error || "Login failed");
+      setError(result.error || "Error al iniciar sesión");
       setLoading(false);
     }
   };
@@ -49,8 +49,8 @@ export default function LoginPage() {
           {/* Header */}
           <div className="text-center mb-6">
             <span className="text-5xl">🐾</span>
-            <h1 className="text-2xl font-extrabold text-deep mt-3">Welcome</h1>
-            <p className="text-glacial text-sm mt-1">Log in to manage the shelter</p>
+            <h1 className="text-2xl font-extrabold text-deep mt-3">Bienvenido</h1>
+            <p className="text-glacial text-sm mt-1">Iniciá sesión para gestionar el refugio</p>
           </div>
 
           <form onSubmit={handleSubmit} className="space-y-4">
@@ -70,7 +70,7 @@ export default function LoginPage() {
             />
 
             <Input
-              label="Password"
+              label="Contraseña"
               type="password"
               value={password}
               onChange={(e) => setPassword(e.target.value)}
@@ -79,15 +79,15 @@ export default function LoginPage() {
             />
 
             <Button type="submit" disabled={loading} className="w-full mt-2">
-              {loading ? "Logging in..." : "Log In"}
+              {loading ? "Iniciando sesión..." : "Iniciar sesión"}
             </Button>
           </form>
 
           {/* Link to the registration page for new visitors */}
           <p className="mt-5 text-sm text-glacial text-center">
-            Don't have an account?{" "}
+            ¿No tenés cuenta?{" "}
             <Link to="/register" className="text-forest font-semibold hover:underline">
-              Sign up
+              Registrate
             </Link>
           </p>
 

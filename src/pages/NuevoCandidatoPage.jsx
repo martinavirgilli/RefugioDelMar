@@ -51,7 +51,7 @@ export default function NuevoCandidatoPage() {
     <Layout>
       <div className="flex flex-col items-center justify-center min-h-[70vh]">
         <h1 className="text-3xl font-bold mb-6 text-center text-deep">
-          Register New Candidate
+          Registrar nuevo candidato
         </h1>
         <form
           onSubmit={handleSubmit}
@@ -63,14 +63,14 @@ export default function NuevoCandidatoPage() {
             </div>
           )}
 
-          <Input label="Name"        value={form.nombre}      onChange={handleChange} name="nombre"      required />
-          <Input label="Species"     value={form.especie}     onChange={handleChange} name="especie"     required />
-          <Input label="Age"         type="number" value={form.edad} onChange={handleChange} name="edad" required />
-          <Input label="Description" value={form.descripcion} onChange={handleChange} name="descripcion" required />
-          <Input label="Image (URL)" value={form.imagen}      onChange={handleChange} name="imagen" />
+          <Input label="Nombre"       value={form.nombre}      onChange={handleChange} name="nombre"      required />
+          <Input label="Especie"      value={form.especie}     onChange={handleChange} name="especie"     required />
+          <Input label="Edad"         type="number" value={form.edad} onChange={handleChange} name="edad" required />
+          <Input label="Descripción"  value={form.descripcion} onChange={handleChange} name="descripcion" required />
+          <Input label="Imagen (URL)" value={form.imagen}      onChange={handleChange} name="imagen" />
 
           <Button type="submit" className="w-full" disabled={loading}>
-            {loading ? "Creating..." : "Add Candidate"}
+            {loading ? "Creando..." : "Agregar candidato"}
           </Button>
         </form>
       </div>

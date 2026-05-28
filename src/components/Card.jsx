@@ -13,7 +13,7 @@ import Button from "./Button";
 
 export default function Card({ candidato, onToggle, onDelete }) {
   return (
-    <div className="bg-snowmelt rounded-2xl border border-sun shadow-sm hover:shadow-md transition-shadow duration-200 overflow-hidden flex flex-col">
+    <div className="bg-snowmelt rounded-2xl border border-rim/50 shadow-sm hover:shadow-md transition-shadow duration-200 overflow-hidden flex flex-col">
 
       {/* ── Image section ── */}
       <div className="relative w-full aspect-video bg-rim/30">
@@ -39,7 +39,7 @@ export default function Card({ candidato, onToggle, onDelete }) {
         {/* "Adopted" ribbon — only shown when the animal has been adopted */}
         {candidato.adoptado && (
           <div className="absolute top-2 right-2 bg-green-500 text-white text-xs font-bold px-2.5 py-0.5 rounded-full shadow-sm">
-            Adopted
+            Adoptado
           </div>
         )}
       </div>
@@ -51,8 +51,8 @@ export default function Card({ candidato, onToggle, onDelete }) {
           {candidato.edad !== undefined && (
             <p className="text-xs text-glacial mt-0.5">
               {candidato.edad === 0
-                ? "Less than 1 year old"
-                : `${candidato.edad} ${candidato.edad === 1 ? "year" : "years"} old`}
+                ? "Menos de 1 año"
+                : `${candidato.edad} ${candidato.edad === 1 ? "año" : "años"}`}
             </p>
           )}
         </div>
@@ -66,7 +66,7 @@ export default function Card({ candidato, onToggle, onDelete }) {
         <div className="flex gap-2 flex-wrap pt-2">
           <Link to={`/candidatos/${candidato.id}`} className="flex-1">
             <Button variant="secondary" className="w-full text-xs py-1.5">
-              View details
+              Ver detalles
             </Button>
           </Link>
           <Button
@@ -74,7 +74,7 @@ export default function Card({ candidato, onToggle, onDelete }) {
             className="flex-1 text-xs py-1.5"
             onClick={() => onToggle && onToggle(candidato.id)}
           >
-            {candidato.adoptado ? "Revert" : "Adopt"}
+            {candidato.adoptado ? "Revertir" : "Adoptar"}
           </Button>
           {/* Delete button is only shown when the parent passes an onDelete handler */}
           {onDelete && (
@@ -82,12 +82,12 @@ export default function Card({ candidato, onToggle, onDelete }) {
               variant="danger"
               className="text-xs py-1.5 px-3"
               onClick={() => {
-                if (window.confirm(`Are you sure you want to remove ${candidato.nombre}?`)) {
+                if (window.confirm(`¿Seguro que querés eliminar a ${candidato.nombre}?`)) {
                   onDelete(candidato.id);
                 }
               }}
             >
-              Delete
+              Eliminar
             </Button>
           )}
         </div>

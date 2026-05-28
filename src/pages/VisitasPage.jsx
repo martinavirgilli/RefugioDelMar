@@ -51,7 +51,7 @@ export default function VisitasPage() {
         <div className="flex items-center justify-center min-h-[50vh]">
           <div className="flex flex-col items-center gap-3 text-glacial">
             <span className="text-4xl animate-pulse">🐾</span>
-            <span className="text-sm font-medium">Loading visits...</span>
+            <span className="text-sm font-medium">Cargando visitas...</span>
           </div>
         </div>
       </Layout>
@@ -68,7 +68,7 @@ export default function VisitasPage() {
           onClick={loadVisitas}
           className="px-4 py-2 bg-glacial text-white rounded-lg hover:bg-glacial-dark text-sm font-semibold transition-colors"
         >
-          Retry
+          Reintentar
         </button>
       </Layout>
     );
@@ -78,8 +78,8 @@ export default function VisitasPage() {
     return (
       <Layout>
         <EmptyState
-          title="No scheduled visits"
-          description="No upcoming visits have been registered yet."
+          title="No hay visitas programadas"
+          description="Aún no se han registrado visitas próximas."
         />
       </Layout>
     );
@@ -87,7 +87,7 @@ export default function VisitasPage() {
 
   return (
     <Layout>
-      <h1 className="text-2xl font-bold mb-6 text-deep">Scheduled Visits</h1>
+      <h1 className="text-2xl font-bold mb-6 text-deep">Visitas programadas</h1>
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
         {visitas.map((visita) => (
           <VisitaCard

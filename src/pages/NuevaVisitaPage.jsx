@@ -81,7 +81,7 @@ export default function NuevaVisitaPage() {
     <Layout>
       <div className="flex flex-col items-center justify-center min-h-[70vh]">
         <h1 className="text-3xl font-bold mb-6 text-center text-deep">
-          Schedule New Visit
+          Programar nueva visita
         </h1>
         <form
           onSubmit={handleSubmit}
@@ -95,9 +95,9 @@ export default function NuevaVisitaPage() {
 
           {/* Candidate selector — only shows animals that are still available */}
           <div className="flex flex-col gap-1 mb-3">
-            <label className="text-sm font-semibold text-deep">Candidate *</label>
+            <label className="text-sm font-semibold text-deep">Candidato *</label>
             {loadingCandidatos ? (
-              <div className="text-sm text-glacial">Loading candidates...</div>
+              <div className="text-sm text-glacial">Cargando candidatos...</div>
             ) : (
               <select
                 name="candidato"
@@ -106,7 +106,7 @@ export default function NuevaVisitaPage() {
                 required
                 className="border border-rim px-3 py-2 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-forest focus:border-forest bg-snowmelt text-deep"
               >
-                <option value="">Select a candidate</option>
+                <option value="">Seleccionar candidato</option>
                 {candidatos
                   .filter((c) => !c.adoptado)
                   .map((c) => (
@@ -119,7 +119,7 @@ export default function NuevaVisitaPage() {
           </div>
 
           <Input
-            label="Visit Date & Time *"
+            label="Fecha y hora de visita *"
             type="datetime-local"
             value={form.fecha_visita}
             onChange={handleChange}
@@ -128,24 +128,24 @@ export default function NuevaVisitaPage() {
             min={getMinDate()} // Enforce future-only scheduling in the browser
           />
 
-          <Input label="Visitor Name *"  value={form.visitante_nombre}   onChange={handleChange} name="visitante_nombre"   required />
-          <Input label="Visitor Email *" type="email" value={form.visitante_email} onChange={handleChange} name="visitante_email" required />
-          <Input label="Visitor Phone"   type="tel"  value={form.visitante_telefono} onChange={handleChange} name="visitante_telefono" />
+          <Input label="Nombre del visitante *"  value={form.visitante_nombre}   onChange={handleChange} name="visitante_nombre"   required />
+          <Input label="Email del visitante *"   type="email" value={form.visitante_email} onChange={handleChange} name="visitante_email" required />
+          <Input label="Teléfono del visitante"  type="tel"  value={form.visitante_telefono} onChange={handleChange} name="visitante_telefono" />
 
           <div className="flex flex-col gap-1 mb-3">
-            <label className="text-sm font-semibold text-deep">Notes</label>
+            <label className="text-sm font-semibold text-deep">Notas</label>
             <textarea
               name="notas"
               value={form.notas}
               onChange={handleChange}
               className="border border-rim px-3 py-2 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-forest focus:border-forest bg-snowmelt resize-none"
               rows="3"
-              placeholder="Additional notes about the visit..."
+              placeholder="Notas adicionales sobre la visita..."
             />
           </div>
 
           <Button type="submit" className="w-full" disabled={loading || loadingCandidatos}>
-            {loading ? "Scheduling..." : "Schedule Visit"}
+            {loading ? "Programando..." : "Programar visita"}
           </Button>
         </form>
       </div>

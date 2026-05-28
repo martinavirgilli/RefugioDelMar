@@ -17,7 +17,7 @@ export default function AdopcionesLayout() {
     <Layout>
       <div className="flex flex-col items-center justify-center min-h-[70vh]">
         <h1 className="text-3xl font-bold mb-6 text-glacial">
-          Adoptions
+          Adopciones
         </h1>
 
         {/* Tab navigation */}
@@ -33,7 +33,7 @@ export default function AdopcionesLayout() {
               }`
             }
           >
-            Summary
+            Resumen
           </NavLink>
           <NavLink
             to="/adopciones/historial"
@@ -45,7 +45,7 @@ export default function AdopcionesLayout() {
               }`
             }
           >
-            History
+            Historial
           </NavLink>
         </div>
 
