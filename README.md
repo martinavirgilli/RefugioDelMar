@@ -2,7 +2,7 @@
 
 A full-stack web application for managing an animal shelter — built as a final portfolio project.
 
-**Live demo:** _[link to your deployed app]_
+**Live demo:** https://refugio-del-mar.netlify.app
 
 ---
 
