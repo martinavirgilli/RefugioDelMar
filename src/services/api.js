@@ -8,7 +8,8 @@
  *
  * The JWT access token is attached automatically to every request via the
  * Authorization header. A 401 response clears the session and redirects
- * to /login so the user can re-authenticate.
+ * to /login, unless the caller opts out with `redirectOn401: false`
+ * (used by public pages that simply degrade when there is no session).
  */
 
 const API_URL = import.meta.env.VITE_API_URL || "http://localhost:8000";
@@ -16,55 +17,155 @@ const API_URL = import.meta.env.VITE_API_URL || "http://localhost:8000";
 /** Read the JWT access token stored after login/register. */
 const getToken = () => localStorage.getItem("token");
 
+/** Remove the persisted session. */
+const clearSession = () => {
+  localStorage.removeItem("token");
+  localStorage.removeItem("user");
+};
+
+/**
+ * Turn any failed Response into a single, readable Error message.
+ *
+ * The backend answers with three different error shapes, so they are all
+ * handled here instead of being re-implemented in every service method:
+ *   1. Custom views:      { error: "..." } / { detail: "..." } / { message: "..." }
+ *   2. DRF validation:    { fecha_visita: ["..."], nombre: ["..."] }
+ *   3. Non-JSON (a Django HTML error page, an empty body, a gateway error)
+ *
+ * @param {Response} response      - the failed fetch Response
+ * @param {string}   fallbackMessage - message used when the body says nothing useful
+ * @returns {Promise<Error>}
+ */
+export const parseErrorResponse = async (response, fallbackMessage) => {
+  const statusMessage = `Error ${response.status}: ${response.statusText || fallbackMessage}`;
+
+  let body;
+  try {
+    body = await response.json();
+  } catch {
+    // Body was empty or not JSON at all
+    return new Error(statusMessage);
+  }
+
+  if (!body || typeof body !== "object") {
+    return new Error(statusMessage);
+  }
+
+  // 1. Single-message shapes
+  const single = body.error || body.detail || body.message;
+  if (typeof single === "string") {
+    return new Error(single);
+  }
+
+  // 2. DRF field errors — surface the first one so the user sees something concrete
+  for (const [field, value] of Object.entries(body)) {
+    const text = Array.isArray(value) ? value[0] : value;
+    if (typeof text === "string" && text.trim()) {
+      // non_field_errors has no useful field name to show
+      return new Error(field === "non_field_errors" ? text : `${text}`);
+    }
+  }
+
+  return new Error(fallbackMessage || statusMessage);
+};
+
+/**
+ * Resolve a Response into parsed data, or throw a readable Error.
+ *
+ * Also handles the empty body that Django returns on 204 No Content
+ * (DELETE) so callers never have to think about it.
+ *
+ * @param {Response} response
+ * @param {string}   fallbackMessage - used when the error body says nothing useful
+ * @param {boolean}  unwrapResults   - true for list endpoints: returns `results`
+ *                                     when DRF pagination is active
+ */
+const handleResponse = async (response, fallbackMessage, { unwrapResults = false } = {}) => {
+  if (!response.ok) {
+    throw await parseErrorResponse(response, fallbackMessage);
+  }
+
+  if (response.status === 204) {
+    return { success: true };
+  }
+
+  const text = await response.text();
+  if (!text) {
+    return { success: true };
+  }
+
+  const data = JSON.parse(text);
+  if (unwrapResults) {
+    return Array.isArray(data) ? data : (data.results ?? data);
+  }
+  return data;
+};
+
 /**
  * Wrapper around fetch that attaches the JWT token and handles
  * common error cases (401, non-JSON responses from Django error pages).
  *
  * @param {string} endpoint - API path, e.g. '/api/candidatos/'
- * @param {object} options  - Standard fetch options (method, body, etc.)
+ * @param {object} options  - Standard fetch options, plus:
+ *                            redirectOn401 (default true) — send the user to
+ *                            /login when the token is missing or expired.
  * @returns {Promise<Response>}
  */
 export const apiRequest = async (endpoint, options = {}) => {
+  const { redirectOn401 = true, headers: extraHeaders, ...fetchOptions } = options;
   const token = getToken();
 
   const headers = {
     "Content-Type": "application/json",
-    ...options.headers,
+    ...extraHeaders,
   };
 
   if (token) {
     headers.Authorization = `Bearer ${token}`;
   }
 
-  const config = { ...options, headers };
+  const response = await fetch(`${API_URL}${endpoint}`, { ...fetchOptions, headers });
 
-  try {
-    const response = await fetch(`${API_URL}${endpoint}`, config);
-
-    // Expired or invalid token — clear session and redirect to login
-    if (response.status === 401) {
-      localStorage.removeItem("token");
-      localStorage.removeItem("user");
-      window.location.href = "/login";
-      throw new Error("Session expired. Please log in again.");
-    }
-
-    // Django error pages return HTML instead of JSON — surface a clear message
-    const contentType = response.headers.get("content-type");
-    if (contentType && !contentType.includes("application/json")) {
-      const text = await response.text();
-      if (text.trim().startsWith("<!DOCTYPE")) {
-        throw new Error(
-          `Server error: the API returned HTML instead of JSON. ` +
-          `Check that endpoint ${endpoint} exists and is working correctly.`
-        );
-      }
-    }
-
-    return response;
-  } catch (error) {
-    throw error;
+  // Expired or invalid token — clear the session and send the user to login.
+  // Public pages pass redirectOn401: false and handle the 401 themselves.
+  if (response.status === 401 && redirectOn401) {
+    clearSession();
+    window.location.href = "/login";
+    throw new Error("Tu sesión expiró. Iniciá sesión de nuevo.");
   }
+
+  return response;
+};
+
+
+// ---------------------------------------------------------------------------
+// Auth service
+// ---------------------------------------------------------------------------
+
+export const authService = {
+  /** Authenticate with email + password. Returns { token, refresh, user }. */
+  login: async (email, password) => {
+    const response = await apiRequest("/api/auth/login", {
+      method: "POST",
+      body: JSON.stringify({ email, password }),
+      // A wrong password answers 401; redirecting would reload the login page
+      // and swallow the error message.
+      redirectOn401: false,
+    });
+
+    return handleResponse(response, "No pudimos iniciar sesión");
+  },
+
+  /** Create a new regular account. Returns { token, refresh, user }. */
+  register: async (email, password, name) => {
+    const response = await apiRequest("/api/auth/register", {
+      method: "POST",
+      body: JSON.stringify({ email, password, name }),
+      redirectOn401: false,
+    });
+
+    return handleResponse(response, "No pudimos crear la cuenta");
+  },
 };
 
 
@@ -73,38 +174,16 @@ export const apiRequest = async (endpoint, options = {}) => {
 // ---------------------------------------------------------------------------
 
 export const candidatosService = {
-  /** Fetch all candidates, optionally filtered via query params. */
-  getAll: async () => {
-    const response = await apiRequest("/api/candidatos/", { method: "GET" });
-
-    if (!response.ok) {
-      try {
-        const error = await response.json();
-        throw new Error(error.error || error.message || error.detail || "Error fetching candidates");
-      } catch (parseError) {
-        throw new Error(`Error ${response.status}: ${response.statusText}`);
-      }
-    }
-
-    const data = await response.json();
-    // DRF returns results in a `results` key when pagination is active
-    return Array.isArray(data) ? data : (data.results || data);
+  /** Fetch all candidates. */
+  getAll: async (options = {}) => {
+    const response = await apiRequest("/api/candidatos/", { method: "GET", ...options });
+    return handleResponse(response, "Error al cargar los candidatos", { unwrapResults: true });
   },
 
   /** Fetch a single candidate by its primary key. */
-  getById: async (id) => {
-    const response = await apiRequest(`/api/candidatos/${id}/`, { method: "GET" });
-
-    if (!response.ok) {
-      try {
-        const error = await response.json();
-        throw new Error(error.error || error.message || error.detail || "Error fetching candidate");
-      } catch (parseError) {
-        throw new Error(`Error ${response.status}: ${response.statusText}`);
-      }
-    }
-
-    return response.json();
+  getById: async (id, options = {}) => {
+    const response = await apiRequest(`/api/candidatos/${id}/`, { method: "GET", ...options });
+    return handleResponse(response, "Error al cargar el candidato");
   },
 
   /** Create a new candidate. Requires admin privileges. */
@@ -113,73 +192,31 @@ export const candidatosService = {
       method: "POST",
       body: JSON.stringify(candidato),
     });
-
-    if (!response.ok) {
-      try {
-        const error = await response.json();
-        throw new Error(error.error || error.message || error.detail || "Error creating candidate");
-      } catch (parseError) {
-        throw new Error(`Error ${response.status}: ${response.statusText}`);
-      }
-    }
-
-    return response.json();
+    return handleResponse(response, "Error al crear el candidato");
   },
 
   /** Update an existing candidate. Requires admin privileges. */
   update: async (id, candidato) => {
-    const response = await apiRequest(`/api/candidatos/${id}`, {
+    const response = await apiRequest(`/api/candidatos/${id}/`, {
       method: "PUT",
       body: JSON.stringify(candidato),
     });
-
-    if (!response.ok) {
-      const error = await response.json();
-      throw new Error(error.message || "Error updating candidate");
-    }
-
-    return response.json();
+    return handleResponse(response, "Error al actualizar el candidato");
   },
 
   /** Delete a candidate by ID. Requires admin privileges. */
   delete: async (id) => {
     const response = await apiRequest(`/api/candidatos/${id}/`, { method: "DELETE" });
-
-    if (!response.ok) {
-      try {
-        const error = await response.json();
-        throw new Error(error.error || error.message || error.detail || "Error deleting candidate");
-      } catch (parseError) {
-        throw new Error(`Error ${response.status}: ${response.statusText}`);
-      }
-    }
-
-    // Django returns 204 No Content on successful delete — handle the empty body
-    if (response.status === 204 || response.status === 200) {
-      const text = await response.text();
-      return text ? JSON.parse(text) : { success: true };
-    }
-
-    return response.json();
+    return handleResponse(response, "Error al eliminar el candidato");
   },
 
   /**
    * Toggle the adopted/available status of a candidate.
-   * Uses a custom PATCH action defined on the ViewSet.
+   * Uses a custom PATCH action defined on the ViewSet. Requires admin privileges.
    */
   toggleAdopcion: async (id) => {
     const response = await apiRequest(`/api/candidatos/${id}/adoptar/`, { method: "PATCH" });
-
-    if (!response.ok) {
-      try {
-        const error = await response.json();
-        throw new Error(error.error || error.message || error.detail || "Error updating adoption status");
-      } catch (parseError) {
-        throw new Error(`Error ${response.status}: ${response.statusText}`);
-      }
-    }
-
-    return response.json();
+    return handleResponse(response, "Error al actualizar el estado de adopción");
   },
 };
 
@@ -190,35 +227,15 @@ export const candidatosService = {
 
 export const adopcionesService = {
   /** Fetch aggregated stats: total, adopted, and available counts. */
-  getResumen: async () => {
-    const response = await apiRequest("/api/adopciones/resumen", { method: "GET" });
-
-    if (!response.ok) {
-      try {
-        const error = await response.json();
-        throw new Error(error.error || error.message || error.detail || "Error fetching adoption summary");
-      } catch (parseError) {
-        throw new Error(`Error ${response.status}: ${response.statusText}`);
-      }
-    }
-
-    return response.json();
+  getResumen: async (options = {}) => {
+    const response = await apiRequest("/api/adopciones/resumen", { method: "GET", ...options });
+    return handleResponse(response, "Error al cargar el resumen de adopciones");
   },
 
   /** Fetch the list of all adopted candidates ordered by most recent. */
-  getHistorial: async () => {
-    const response = await apiRequest("/api/adopciones/historial", { method: "GET" });
-
-    if (!response.ok) {
-      try {
-        const error = await response.json();
-        throw new Error(error.error || error.message || error.detail || "Error fetching adoption history");
-      } catch (parseError) {
-        throw new Error(`Error ${response.status}: ${response.statusText}`);
-      }
-    }
-
-    return response.json();
+  getHistorial: async (options = {}) => {
+    const response = await apiRequest("/api/adopciones/historial", { method: "GET", ...options });
+    return handleResponse(response, "Error al cargar el historial de adopciones");
   },
 };
 
@@ -231,34 +248,13 @@ export const visitasService = {
   /** Fetch all upcoming (future) visits. Admin only. */
   getAll: async () => {
     const response = await apiRequest("/api/visitas/", { method: "GET" });
-
-    if (!response.ok) {
-      try {
-        const error = await response.json();
-        throw new Error(error.error || error.message || error.detail || "Error fetching visits");
-      } catch (parseError) {
-        throw new Error(`Error ${response.status}: ${response.statusText}`);
-      }
-    }
-
-    const data = await response.json();
-    return Array.isArray(data) ? data : (data.results || data);
+    return handleResponse(response, "Error al cargar las visitas", { unwrapResults: true });
   },
 
   /** Fetch a single visit by ID. */
   getById: async (id) => {
     const response = await apiRequest(`/api/visitas/${id}/`, { method: "GET" });
-
-    if (!response.ok) {
-      try {
-        const error = await response.json();
-        throw new Error(error.error || error.message || error.detail || "Error fetching visit");
-      } catch (parseError) {
-        throw new Error(`Error ${response.status}: ${response.statusText}`);
-      }
-    }
-
-    return response.json();
+    return handleResponse(response, "Error al cargar la visita");
   },
 
   /** Schedule a new visit. Requires admin privileges. */
@@ -267,58 +263,13 @@ export const visitasService = {
       method: "POST",
       body: JSON.stringify(visita),
     });
-
-    if (!response.ok) {
-      try {
-        const error = await response.json();
-
-        // DRF validation errors are keyed by field name — surface the first one
-        if (error.fecha_visita) {
-          const msg = Array.isArray(error.fecha_visita)
-            ? error.fecha_visita[0]
-            : error.fecha_visita;
-          throw new Error(msg || "Visit date must be in the future");
-        }
-
-        const firstFieldError = Object.keys(error).find(
-          (key) => Array.isArray(error[key]) && error[key].length > 0
-        );
-        if (firstFieldError) {
-          const msg = Array.isArray(error[firstFieldError])
-            ? error[firstFieldError][0]
-            : error[firstFieldError];
-          throw new Error(msg);
-        }
-
-        throw new Error(error.error || error.message || error.detail || "Error creating visit");
-      } catch (parseError) {
-        if (parseError instanceof Error && parseError.message) throw parseError;
-        throw new Error(`Error ${response.status}: ${response.statusText}`);
-      }
-    }
-
-    return response.json();
+    return handleResponse(response, "Error al crear la visita");
   },
 
   /** Delete a visit by ID. Requires admin privileges. */
   delete: async (id) => {
     const response = await apiRequest(`/api/visitas/${id}/`, { method: "DELETE" });
-
-    if (!response.ok) {
-      try {
-        const error = await response.json();
-        throw new Error(error.error || error.message || error.detail || "Error deleting visit");
-      } catch (parseError) {
-        throw new Error(`Error ${response.status}: ${response.statusText}`);
-      }
-    }
-
-    if (response.status === 204 || response.status === 200) {
-      const text = await response.text();
-      return text ? JSON.parse(text) : { success: true };
-    }
-
-    return response.json();
+    return handleResponse(response, "Error al eliminar la visita");
   },
 
   /**
@@ -330,17 +281,7 @@ export const visitasService = {
       method: "PATCH",
       body: JSON.stringify({ comentario_final: comentario }),
     });
-
-    if (!response.ok) {
-      try {
-        const error = await response.json();
-        throw new Error(error.error || error.message || error.detail || "Error adding comment");
-      } catch (parseError) {
-        throw new Error(`Error ${response.status}: ${response.statusText}`);
-      }
-    }
-
-    return response.json();
+    return handleResponse(response, "Error al agregar el comentario");
   },
 };
 
@@ -356,18 +297,7 @@ export const solicitudesService = {
    */
   getAll: async () => {
     const response = await apiRequest("/api/visitas/solicitudes/", { method: "GET" });
-
-    if (!response.ok) {
-      try {
-        const error = await response.json();
-        throw new Error(error.error || error.message || error.detail || "Error fetching requests");
-      } catch (parseError) {
-        throw new Error(`Error ${response.status}: ${response.statusText}`);
-      }
-    }
-
-    const data = await response.json();
-    return Array.isArray(data) ? data : (data.results || data);
+    return handleResponse(response, "Error al cargar las solicitudes", { unwrapResults: true });
   },
 
   /** Submit a new visit request. Any authenticated user. */
@@ -376,22 +306,7 @@ export const solicitudesService = {
       method: "POST",
       body: JSON.stringify(solicitud),
     });
-
-    if (!response.ok) {
-      try {
-        const error = await response.json();
-        const firstField = Object.keys(error).find(
-          (k) => Array.isArray(error[k]) && error[k].length > 0
-        );
-        if (firstField) throw new Error(Array.isArray(error[firstField]) ? error[firstField][0] : error[firstField]);
-        throw new Error(error.error || error.message || error.detail || "Error submitting request");
-      } catch (parseError) {
-        if (parseError instanceof Error && parseError.message) throw parseError;
-        throw new Error(`Error ${response.status}: ${response.statusText}`);
-      }
-    }
-
-    return response.json();
+    return handleResponse(response, "Error al enviar la solicitud");
   },
 
   /** Accept a visit request and set the visit date. Admin only. */
@@ -400,17 +315,7 @@ export const solicitudesService = {
       method: "PATCH",
       body: JSON.stringify({ fecha_visita }),
     });
-
-    if (!response.ok) {
-      try {
-        const error = await response.json();
-        throw new Error(error.error || error.message || error.detail || "Error accepting request");
-      } catch (parseError) {
-        throw new Error(`Error ${response.status}: ${response.statusText}`);
-      }
-    }
-
-    return response.json();
+    return handleResponse(response, "Error al aceptar la solicitud");
   },
 
   /** Reject a visit request. Admin only. */
@@ -419,16 +324,6 @@ export const solicitudesService = {
       method: "PATCH",
       body: JSON.stringify({}),
     });
-
-    if (!response.ok) {
-      try {
-        const error = await response.json();
-        throw new Error(error.error || error.message || error.detail || "Error rejecting request");
-      } catch (parseError) {
-        throw new Error(`Error ${response.status}: ${response.statusText}`);
-      }
-    }
-
-    return response.json();
+    return handleResponse(response, "Error al rechazar la solicitud");
   },
 };

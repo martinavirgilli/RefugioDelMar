@@ -10,6 +10,7 @@
  */
 
 import { createContext, useContext, useState, useEffect } from "react";
+import { authService } from "../services/api";
 
 const AuthContext = createContext(null);
 
@@ -39,32 +40,21 @@ export function AuthProvider({ children }) {
     setLoading(false);
   }, []);
 
+  /**
+   * Persist the session returned by the API and update the context state.
+   * Both login and register end the same way, so the logic lives in one place.
+   */
+  const startSession = (data) => {
+    localStorage.setItem("token", data.token);
+    localStorage.setItem("user", JSON.stringify(data.user));
+    setToken(data.token);
+    setUser(data.user);
+  };
+
   /** Authenticate with email + password and store the returned JWT. */
   const login = async (email, password) => {
     try {
-      const response = await fetch(
-        `${import.meta.env.VITE_API_URL || "http://localhost:8000"}/api/auth/login`,
-        {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ email, password }),
-        }
-      );
-
-      if (!response.ok) {
-        const error = await response.json();
-        throw new Error(error.error || error.message || "Login failed");
-      }
-
-      const data = await response.json();
-
-      // Persist token and user so the session survives a refresh
-      localStorage.setItem("token", data.token);
-      localStorage.setItem("user", JSON.stringify(data.user));
-
-      setToken(data.token);
-      setUser(data.user);
-
+      startSession(await authService.login(email, password));
       return { success: true };
     } catch (error) {
       return { success: false, error: error.message };
@@ -77,28 +67,7 @@ export function AuthProvider({ children }) {
    */
   const register = async (email, password, name) => {
     try {
-      const response = await fetch(
-        `${import.meta.env.VITE_API_URL || "http://localhost:8000"}/api/auth/register`,
-        {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ email, password, name }),
-        }
-      );
-
-      if (!response.ok) {
-        const error = await response.json();
-        throw new Error(error.error || "Registration failed");
-      }
-
-      const data = await response.json();
-
-      localStorage.setItem("token", data.token);
-      localStorage.setItem("user", JSON.stringify(data.user));
-
-      setToken(data.token);
-      setUser(data.user);
-
+      startSession(await authService.register(email, password, name));
       return { success: true };
     } catch (error) {
       return { success: false, error: error.message };
