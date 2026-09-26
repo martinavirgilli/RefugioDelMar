@@ -152,8 +152,10 @@ export default function HomePage() {
     <Layout>
 
       {/* ── 1. Hero ────────────────────────────────────────────────────── */}
+      {/* En pantallas chicas el texto no entra arriba de la foto: el titular se
+          cortaba. Hasta lg va debajo, sobre arena; desde lg, superpuesto. */}
       <section className="animate-surgir">
-        <div className="relative overflow-hidden rounded-blob shadow-elevada">
+        <div className="relative">
           <img
             src={portada1024}
             srcSet={`${portada640} 640w, ${portada1024} 1024w, ${portada1600} 1600w`}
@@ -163,16 +165,19 @@ export default function HomePage() {
             fetchPriority="high"
             decoding="async"
             alt="Patio del Refugio del Mar en un día de sol, con perros sueltos sobre el pasto y un cartel de madera que dice “Un hogar para cada patita”"
-            className="aspect-[4/3] w-full object-cover object-center sm:aspect-[16/9] lg:aspect-[5/2]"
+            className="aspect-[4/3] w-full rounded-blob object-cover object-center shadow-elevada sm:aspect-[16/9] lg:aspect-[5/2]"
           />
-          {/* Degradado para que el texto blanco se lea sobre cualquier zona de la foto */}
-          <div className="absolute inset-0 bg-gradient-to-t from-mar/90 via-mar/45 to-mar/5" aria-hidden="true" />
+          {/* Degradado: solo hace falta cuando el texto va arriba de la foto */}
+          <div
+            className="absolute inset-0 hidden rounded-blob bg-gradient-to-t from-mar/95 via-mar/60 to-mar/10 lg:block"
+            aria-hidden="true"
+          />
 
-          <div className="absolute inset-0 flex flex-col justify-end gap-4 p-6 sm:p-10 lg:p-14">
-            <h1 className="max-w-2xl text-3xl font-bold leading-tight text-white drop-shadow-sm sm:text-4xl lg:text-5xl">
+          <div className="mt-7 flex flex-col gap-4 lg:absolute lg:inset-0 lg:mt-0 lg:justify-end lg:p-14">
+            <h1 className="max-w-2xl text-3xl font-bold leading-tight text-mar sm:text-4xl lg:text-white lg:drop-shadow-sm">
               Acá cada animal espera lo mismo: que alguien lo elija.
             </h1>
-            <p className="max-w-xl text-sm leading-relaxed text-bruma sm:text-base">
+            <p className="max-w-xl text-sm leading-relaxed text-niebla-oscuro sm:text-base lg:text-bruma">
               Somos un refugio en Pinamar. Rescatamos animales de la costa, los curamos
               y buscamos la casa que les toca. Quizás sea la tuya.
             </p>
@@ -183,8 +188,9 @@ export default function HomePage() {
               <Button
                 as="a"
                 href="#como-adoptar"
+                variant="secondary"
                 size="lg"
-                className="bg-white/95 text-mar hover:bg-white"
+                className="lg:border-transparent lg:bg-white lg:hover:bg-espuma"
               >
                 Cómo adoptar
               </Button>
@@ -375,8 +381,8 @@ export default function HomePage() {
             <Button
               as="a"
               href="mailto:hola@refugiodelmar.org?subject=Quiero%20ser%20voluntario"
+              variant="claro"
               size="lg"
-              className="bg-white/95 text-mar hover:bg-white"
             >
               Quiero ser voluntario
             </Button>

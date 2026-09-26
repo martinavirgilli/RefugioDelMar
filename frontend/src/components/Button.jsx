@@ -5,6 +5,7 @@
  *   primary   — relleno mar. La acción principal de la pantalla.
  *   acento    — relleno atardecer. Solo para el CTA emocional ("Quiero conocerlo").
  *               Usar como máximo uno por pantalla: si todo grita, nada grita.
+ *   claro     — relleno blanco. Para el segundo CTA sobre una foto o sobre mar.
  *   secondary — espuma con borde bruma. Acciones secundarias.
  *   ghost     — sin fondo. Acciones terciarias y barras de filtros.
  *   danger    — destructivas (eliminar, rechazar).
@@ -20,6 +21,7 @@ import { Loader2 } from "lucide-react";
 
 const variants = {
   primary:   "bg-mar text-white hover:bg-mar-oscuro shadow-suave",
+  claro:     "bg-white text-mar hover:bg-espuma shadow-suave",
   acento:    "bg-atardecer text-white hover:bg-atardecer-oscuro shadow-suave",
   secondary: "bg-espuma text-mar border border-bruma hover:bg-bruma/40 shadow-suave",
   ghost:     "bg-transparent text-mar hover:bg-bruma/30",

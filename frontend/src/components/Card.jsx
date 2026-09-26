@@ -33,11 +33,14 @@ export default function Card({ candidato, onToggle, onDelete, onSolicitar, varia
             alt={`${candidato.nombre}, ${candidato.especie.toLowerCase()} en adopción`}
             loading="lazy"
             decoding="async"
-            className="block h-auto w-full"
+            // En el catálogo la foto conserva su alto natural (grilla masonry);
+            // en los destacados va recortada, si no las tres tarjetas quedan
+            // de distinto alto y los botones no alinean.
+            className={esDestacado ? "block aspect-[4/3] w-full object-cover" : "block h-auto w-full"}
             onError={(e) => { e.currentTarget.style.display = "none"; }}
           />
         ) : (
-          <div className="flex h-52 items-center justify-center">
+          <div className={`flex items-center justify-center ${esDestacado ? "aspect-[4/3]" : "h-52"}`}>
             <PawPrint className="size-12 text-niebla/40" aria-hidden="true" />
           </div>
         )}
