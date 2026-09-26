@@ -12,6 +12,7 @@ import { useAuth } from "../context/AuthContext";
 import Layout from "../components/Layout";
 import Button from "../components/Button";
 import Input from "../components/Input";
+import Logo from "../components/Logo";
 
 export default function LoginPage() {
   const [email, setEmail] = useState("");
@@ -43,19 +44,20 @@ export default function LoginPage() {
 
   return (
     <Layout>
-      <div className="flex items-center justify-center min-h-[60vh]">
-        <div className="w-full max-w-sm bg-espuma rounded-2xl shadow-lg border border-bruma p-8">
+      <div className="flex min-h-[60vh] items-center justify-center">
+        <div className="w-full max-w-sm rounded-card border border-bruma bg-espuma p-8 shadow-suave">
 
-          {/* Header */}
-          <div className="text-center mb-6">
-            <span className="text-5xl">🐾</span>
-            <h1 className="text-2xl font-extrabold text-mar mt-3">Bienvenido</h1>
-            <p className="text-niebla-oscuro text-sm mt-1">Iniciá sesión para gestionar el refugio</p>
+          <div className="mb-7 text-center">
+            <Logo className="mx-auto h-14 w-14 text-mar" olaClassName="text-niebla" />
+            <h1 className="mt-3 text-2xl font-bold text-mar">Qué bueno verte</h1>
+            <p className="mt-1 text-sm text-niebla-oscuro">
+              Entrá para pedir visitas y seguir tus solicitudes
+            </p>
           </div>
 
           <form onSubmit={handleSubmit} className="space-y-4">
             {error && (
-              <div className="bg-red-50 border border-red-200 text-red-700 px-4 py-3 rounded-lg text-sm">
+              <div role="alert" className="rounded-2xl border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-800">
                 {error}
               </div>
             )}
@@ -66,7 +68,7 @@ export default function LoginPage() {
               value={email}
               onChange={(e) => setEmail(e.target.value)}
               required
-              placeholder="you@email.com"
+              placeholder="vos@email.com"
             />
 
             <Input
@@ -78,15 +80,15 @@ export default function LoginPage() {
               placeholder="••••••••"
             />
 
-            <Button type="submit" disabled={loading} className="w-full mt-2">
-              {loading ? "Iniciando sesión..." : "Iniciar sesión"}
+            <Button type="submit" loading={loading} className="mt-2 w-full">
+              {loading ? "Entrando…" : "Iniciar sesión"}
             </Button>
           </form>
 
           {/* Link to the registration page for new visitors */}
           <p className="mt-5 text-sm text-niebla-oscuro text-center">
             ¿No tenés cuenta?{" "}
-            <Link to="/register" className="text-mar font-semibold hover:underline">
+            <Link to="/register" className="font-bold text-atardecer-oscuro underline underline-offset-2">
               Registrate
             </Link>
           </p>

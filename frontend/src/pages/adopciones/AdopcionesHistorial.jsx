@@ -6,6 +6,10 @@
  */
 
 import { useState, useEffect } from "react";
+import { PawPrint } from "lucide-react";
+import Button from "../../components/Button";
+import EmptyState from "../../components/EmptyState";
+import { Cargando } from "../../components/Skeleton";
 import { adopcionesService } from "../../services/api";
 
 export default function AdopcionesHistorial() {
@@ -24,63 +28,49 @@ export default function AdopcionesHistorial() {
       const data = await adopcionesService.getHistorial();
       setHistorial(data);
     } catch (err) {
-      setError(err.message || "Error loading history");
+      setError(err.message || "Error al cargar el historial");
     } finally {
       setLoading(false);
     }
   };
 
   if (loading) {
-    return (
-      <div className="flex flex-col items-center justify-center min-h-[40vh] gap-3 text-niebla-oscuro">
-        <span className="text-4xl animate-pulse">🐾</span>
-        <span className="text-sm font-medium">Cargando historial...</span>
-      </div>
-    );
+    return <Cargando texto="Cargando el historial…" />;
   }
 
   if (error) {
     return (
-      <div className="flex flex-col items-center justify-center min-h-[40vh] gap-4">
-        <div className="bg-red-50 border border-red-200 text-red-700 px-4 py-3 rounded-lg text-sm">
+      <div className="flex min-h-[40vh] flex-col items-center justify-center gap-4">
+        <div role="alert" className="rounded-2xl border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-800">
           {error}
         </div>
-        <button
-          onClick={loadHistorial}
-          className="px-4 py-2 bg-niebla text-white rounded-lg hover:bg-niebla-oscuro text-sm font-semibold transition-colors"
-        >
-          Reintentar
-        </button>
+        <Button variant="secondary" onClick={loadHistorial}>Reintentar</Button>
       </div>
     );
   }
 
   if (historial.length === 0) {
     return (
-      <div className="flex flex-col items-center justify-center min-h-[40vh]">
-        <p className="text-niebla-oscuro text-lg">
-          🐾 Aún no hay adopciones registradas.
-        </p>
-      </div>
+      <EmptyState
+        icon={PawPrint}
+        title="Todavía no hay adopciones"
+        description="Cuando un animal encuentre su casa, va a aparecer acá."
+      />
     );
   }
 
   return (
     <div className="flex flex-col items-center justify-center min-h-[40vh]">
-      <div className="bg-espuma shadow-lg rounded-2xl p-8 w-full max-w-lg border border-bruma">
-        <h2 className="text-2xl font-bold mb-6 text-center text-niebla-oscuro">
-          Historial de adopciones
-        </h2>
-        <ul className="space-y-3 text-lg text-mar">
+      <div className="w-full max-w-lg rounded-card border border-bruma bg-espuma p-8 shadow-suave">
+        <h2 className="mb-6 text-center text-2xl font-bold text-mar">Historial de adopciones</h2>
+        <ul className="space-y-3">
           {historial.map((candidato) => (
             <li
               key={candidato.id}
-              className="bg-arena rounded-lg px-4 py-2 shadow-sm flex justify-between items-center border border-bruma/50"
+              className="flex items-center justify-between gap-3 rounded-2xl border border-bruma/50 bg-arena px-4 py-3"
             >
-              <span className="font-medium">{candidato.nombre}</span>
-              <span className="text-sm text-niebla-oscuro italic">
-                {candidato.especie}
-              </span>
+              <span className="font-bold text-mar">{candidato.nombre}</span>
+              <span className="text-sm capitalize text-niebla-oscuro">{candidato.especie}</span>
             </li>
           ))}
         </ul>

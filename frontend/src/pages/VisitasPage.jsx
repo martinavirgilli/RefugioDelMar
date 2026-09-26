@@ -12,7 +12,10 @@ import { Link } from "react-router-dom";
 import Layout from "../components/Layout";
 import VisitaCard from "../components/VisitaCard";
 import SolicitudAdminCard from "../components/SolicitudAdminCard";
+import { Plus } from "lucide-react";
 import Button from "../components/Button";
+import Badge from "../components/Badge";
+import { Cargando } from "../components/Skeleton";
 import { visitasService, solicitudesService } from "../services/api";
 
 export default function VisitasPage() {
@@ -58,12 +61,7 @@ export default function VisitasPage() {
   if (loading) {
     return (
       <Layout>
-        <div className="flex items-center justify-center min-h-[50vh]">
-          <div className="flex flex-col items-center gap-3 text-niebla-oscuro">
-            <span className="text-4xl animate-pulse">🐾</span>
-            <span className="text-sm font-medium">Cargando...</span>
-          </div>
-        </div>
+        <Cargando texto="Cargando las visitas…" />
       </Layout>
     );
   }
@@ -71,7 +69,7 @@ export default function VisitasPage() {
   if (error) {
     return (
       <Layout>
-        <div className="bg-red-50 border border-red-200 text-red-700 px-4 py-3 rounded-lg mb-4 text-sm">
+        <div role="alert" className="mb-4 rounded-2xl border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-800">
           {error}
         </div>
         <button
@@ -89,16 +87,17 @@ export default function VisitasPage() {
 
   return (
     <Layout>
-      <h1 className="text-2xl font-bold mb-8 text-mar">Gestión de visitas</h1>
+      <h1 className="mb-8 text-3xl font-bold text-mar">Gestión de visitas</h1>
 
       {/* ── Section 1: Visit requests ── */}
       <section className="mb-10">
         <div className="flex items-center gap-3 mb-4">
           <h2 className="text-lg font-extrabold text-mar">Solicitudes de visita</h2>
           {pendientes.length > 0 && (
-            <span className="bg-yellow-100 text-yellow-800 text-xs font-bold px-2.5 py-0.5 rounded-full">
-              {pendientes.length} pendiente{pendientes.length !== 1 ? "s" : ""}
-            </span>
+            <Badge
+              variant="revision"
+              text={`${pendientes.length} pendiente${pendientes.length !== 1 ? "s" : ""}`}
+            />
           )}
         </div>
 
@@ -108,7 +107,7 @@ export default function VisitasPage() {
           <>
             {pendientes.length > 0 && (
               <div className="mb-6">
-                <p className="text-xs font-semibold text-yellow-700 uppercase tracking-wide mb-3">
+                <p className="mb-3 text-xs font-bold uppercase tracking-wide text-niebla-oscuro">
                   Pendientes de aprobación
                 </p>
                 <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
@@ -159,9 +158,9 @@ export default function VisitasPage() {
         <p className="text-sm text-niebla-oscuro mb-3">
           ¿Necesitás cargar una cita a mano? Usá el formulario de programación manual.
         </p>
-        <Link to="/nueva-visita">
-          <Button variant="secondary">+ Programar visita manualmente</Button>
-        </Link>
+        <Button as={Link} to="/nueva-visita" variant="secondary" icon={Plus}>
+          Programar visita manualmente
+        </Button>
       </div>
     </Layout>
   );

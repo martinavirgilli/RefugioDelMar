@@ -6,17 +6,20 @@
  */
 
 import { useState, useEffect } from "react";
+import { Heart, House, PawPrint } from "lucide-react";
+import Button from "../../components/Button";
+import { Cargando } from "../../components/Skeleton";
 import { adopcionesService } from "../../services/api";
 
 /** Individual stat card used in the summary grid. */
-function StatCard({ icon, label, value, accent = false }) {
+function StatCard({ icon: Icon, label, value }) {
   return (
-    <div className="bg-espuma rounded-2xl border border-bruma shadow-sm p-6 text-center flex flex-col items-center gap-2">
-      <span className="text-4xl">{icon}</span>
-      <span className={`text-4xl font-extrabold ${accent ? "text-mar" : "text-mar"}`}>
-        {value ?? "—"}
+    <div className="flex flex-col items-center gap-2 rounded-card border border-bruma bg-espuma p-6 text-center shadow-suave">
+      <span className="grid size-12 place-items-center rounded-full bg-bruma/50">
+        <Icon className="size-6 text-mar" aria-hidden="true" />
       </span>
-      <span className="text-sm text-niebla-oscuro font-medium">{label}</span>
+      <span className="font-display text-4xl font-bold text-mar">{value ?? "—"}</span>
+      <span className="text-sm font-semibold text-niebla-oscuro">{label}</span>
     </div>
   );
 }
@@ -37,44 +40,34 @@ export default function AdopcionesResumen() {
       const data = await adopcionesService.getResumen();
       setResumen(data);
     } catch (err) {
-      setError(err.message || "Error loading summary");
+      setError(err.message || "Error al cargar el resumen");
     } finally {
       setLoading(false);
     }
   };
 
   if (loading) {
-    return (
-      <div className="flex flex-col items-center justify-center min-h-[40vh] gap-3 text-niebla-oscuro">
-        <span className="text-4xl animate-pulse">🐾</span>
-        <span className="text-sm font-medium">Cargando resumen...</span>
-      </div>
-    );
+    return <Cargando texto="Cargando el resumen…" />;
   }
 
   if (error) {
     return (
-      <div className="flex flex-col items-center justify-center min-h-[40vh] gap-4">
-        <div className="bg-red-50 border border-red-200 text-red-700 px-4 py-3 rounded-lg text-sm">
+      <div className="flex min-h-[40vh] flex-col items-center justify-center gap-4">
+        <div role="alert" className="rounded-2xl border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-800">
           {error}
         </div>
-        <button
-          onClick={loadResumen}
-          className="px-4 py-2 bg-mar text-white rounded-lg hover:bg-mar-oscuro text-sm font-semibold transition-colors"
-        >
-          Reintentar
-        </button>
+        <Button variant="secondary" onClick={loadResumen}>Reintentar</Button>
       </div>
     );
   }
 
   return (
     <div className="py-4">
-      <h2 className="text-xl font-extrabold text-mar mb-6 text-center">Resumen de adopciones</h2>
-      <div className="grid grid-cols-1 sm:grid-cols-3 gap-5 max-w-2xl mx-auto">
-        <StatCard icon="🐾" label="Total candidatos" value={resumen?.total ?? 0} />
-        <StatCard icon="❤️" label="Adoptados"        value={resumen?.adoptados ?? 0} accent />
-        <StatCard icon="🏠" label="Disponibles"      value={resumen?.disponibles ?? 0} />
+      <h2 className="mb-6 text-center text-xl font-bold text-mar">Resumen de adopciones</h2>
+      <div className="mx-auto grid max-w-2xl grid-cols-1 gap-5 sm:grid-cols-3">
+        <StatCard icon={PawPrint} label="Total candidatos" value={resumen?.total ?? 0} />
+        <StatCard icon={Heart} label="Adoptados" value={resumen?.adoptados ?? 0} />
+        <StatCard icon={House} label="Disponibles" value={resumen?.disponibles ?? 0} />
       </div>
     </div>
   );

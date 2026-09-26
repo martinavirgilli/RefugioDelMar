@@ -7,8 +7,13 @@
 
 import { useState, useEffect } from "react";
 import { useParams, Link } from "react-router-dom";
+import { ArrowLeft } from "lucide-react";
 import Layout from "../components/Layout";
+import Button from "../components/Button";
+import Badge from "../components/Badge";
+import { Cargando } from "../components/Skeleton";
 import { candidatosService } from "../services/api";
+import { formatEdad } from "../lib/format";
 
 export default function CandidatoDetailPage() {
   const { id } = useParams();
@@ -40,12 +45,7 @@ export default function CandidatoDetailPage() {
   if (loading) {
     return (
       <Layout>
-        <div className="flex items-center justify-center min-h-[50vh]">
-          <div className="flex flex-col items-center gap-3 text-niebla-oscuro">
-            <span className="text-4xl animate-pulse">🐾</span>
-            <span className="text-sm font-medium">Cargando...</span>
-          </div>
-        </div>
+        <Cargando />
       </Layout>
     );
   }
@@ -53,14 +53,11 @@ export default function CandidatoDetailPage() {
   if (error || !candidato) {
     return (
       <Layout>
-        <Link
-          to="/candidatos"
-          className="inline-block px-4 py-2 bg-niebla text-white rounded-lg shadow hover:bg-niebla-oscuro mb-4 text-sm font-semibold"
-        >
-          ← Volver a candidatos
-        </Link>
-        <div className="bg-red-50 border border-red-200 text-red-700 px-4 py-3 rounded-lg text-sm">
-          {error || "Candidato no encontrado."}
+        <Button as={Link} to="/candidatos" variant="secondary" size="sm" icon={ArrowLeft} className="mb-5">
+          Volver a candidatos
+        </Button>
+        <div role="alert" className="rounded-2xl border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-800">
+          {error || "No encontramos a este candidato."}
         </div>
       </Layout>
     );
@@ -68,31 +65,50 @@ export default function CandidatoDetailPage() {
 
   return (
     <Layout>
-      <Link
-        to="/candidatos"
-        className="inline-block px-4 py-2 bg-niebla text-white rounded-lg shadow hover:bg-niebla-oscuro mb-6 text-sm font-semibold transition-colors"
-      >
-        ← Volver a candidatos
-      </Link>
+      <Button as={Link} to="/candidatos" variant="secondary" size="sm" icon={ArrowLeft} className="mb-6">
+        Volver a candidatos
+      </Button>
       <div className="flex justify-center">
-        <div className="max-w-md w-full bg-espuma shadow-lg p-6 rounded-2xl text-center border border-bruma">
-          <h1 className="text-2xl font-bold text-mar mb-4">{candidato.nombre}</h1>
-          <img
-            src={candidato.imagen}
-            alt={candidato.nombre}
-            className="rounded-xl w-auto max-w-full h-auto max-h-[500px] object-contain mx-auto mb-4 shadow-sm block"
-            onError={(e) => {
-              // Fall back to a local placeholder if the remote image fails to load
-              e.target.src = "/images/default.jpg";
-            }}
-          />
-          <p className="text-niebla-oscuro mb-3 leading-relaxed">{candidato.descripcion}</p>
-          <p className="text-mar font-medium">Edad: <span className="text-niebla-oscuro font-normal">{candidato.edad === 0 ? "Menos de 1 año" : `${candidato.edad} ${candidato.edad === 1 ? "año" : "años"}`}</span></p>
-          <p className="text-mar font-medium">Especie: <span className="text-niebla-oscuro font-normal capitalize">{candidato.especie}</span></p>
-          {candidato.genero && (
-            <p className="text-mar font-medium">Género: <span className="text-niebla-oscuro font-normal capitalize">{candidato.genero}</span></p>
+        <article className="w-full max-w-xl overflow-hidden rounded-card border border-bruma bg-espuma shadow-suave">
+          {candidato.imagen && (
+            <img
+              src={candidato.imagen}
+              alt={`${candidato.nombre}, ${candidato.especie.toLowerCase()} en adopción`}
+              decoding="async"
+              className="block max-h-[28rem] w-full object-cover"
+              onError={(e) => { e.currentTarget.style.display = "none"; }}
+            />
           )}
-        </div>
+
+          <div className="p-7">
+            <div className="flex flex-wrap items-center justify-between gap-3">
+              <h1 className="text-3xl font-bold text-mar">{candidato.nombre}</h1>
+              <Badge
+                text={candidato.adoptado ? "Adoptado" : "Disponible"}
+                variant={candidato.adoptado ? "adoptado" : "disponible"}
+              />
+            </div>
+
+            <dl className="mt-5 grid grid-cols-2 gap-4 border-y border-bruma py-5 sm:grid-cols-3">
+              <div>
+                <dt className="text-xs font-bold uppercase tracking-wide text-niebla-oscuro">Edad</dt>
+                <dd className="mt-0.5 text-sm text-mar">{formatEdad(candidato.edad)}</dd>
+              </div>
+              <div>
+                <dt className="text-xs font-bold uppercase tracking-wide text-niebla-oscuro">Especie</dt>
+                <dd className="mt-0.5 text-sm capitalize text-mar">{candidato.especie}</dd>
+              </div>
+              {candidato.genero && (
+                <div>
+                  <dt className="text-xs font-bold uppercase tracking-wide text-niebla-oscuro">Género</dt>
+                  <dd className="mt-0.5 text-sm capitalize text-mar">{candidato.genero}</dd>
+                </div>
+              )}
+            </dl>
+
+            <p className="mt-5 leading-relaxed text-niebla-oscuro">{candidato.descripcion}</p>
+          </div>
+        </article>
       </div>
     </Layout>
   );

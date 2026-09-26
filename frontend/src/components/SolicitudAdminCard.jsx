@@ -6,13 +6,17 @@
  */
 
 import { useState } from "react";
+import { Phone } from "lucide-react";
 import { solicitudesService } from "../services/api";
 import Button from "./Button";
+import Badge from "./Badge";
+import { formatFechaHora } from "../lib/format";
 
+// El color del borde izquierdo es el que distingue de un vistazo el estado
 const estadoStyles = {
-  revision:  { border: "border-l-yellow-400", badge: "bg-yellow-100 text-yellow-800", label: "En revisión" },
-  aceptada:  { border: "border-l-mar",     badge: "bg-green-100 text-green-800",   label: "Aceptada"    },
-  rechazada: { border: "border-l-red-400",    badge: "bg-red-100 text-red-700",       label: "Rechazada"   },
+  revision:  { border: "border-l-duna", label: "En revisión" },
+  aceptada:  { border: "border-l-pino", label: "Aceptada" },
+  rechazada: { border: "border-l-red-700", label: "Rechazada" },
 };
 
 export default function SolicitudAdminCard({ solicitud, onUpdate }) {
@@ -24,10 +28,7 @@ export default function SolicitudAdminCard({ solicitud, onUpdate }) {
   const styles = estadoStyles[solicitud.estado] ?? estadoStyles.revision;
 
   const fechaFormateada = solicitud.fecha_visita
-    ? new Date(solicitud.fecha_visita).toLocaleDateString("es-AR", {
-        year: "numeric", month: "long", day: "numeric",
-        hour: "2-digit", minute: "2-digit",
-      })
+    ? formatFechaHora(solicitud.fecha_visita)
     : null;
 
   const getMinDate = () => {
@@ -76,12 +77,13 @@ export default function SolicitudAdminCard({ solicitud, onUpdate }) {
           <h3 className="font-bold text-mar text-base">{solicitud.nombre_apellido}</h3>
           <p className="text-xs text-niebla-oscuro mt-0.5">{solicitud.email}</p>
           {solicitud.telefono && (
-            <p className="text-xs text-niebla-oscuro">📞 {solicitud.telefono}</p>
+            <p className="flex items-center gap-1.5 text-xs text-niebla-oscuro">
+              <Phone className="size-3.5" aria-hidden="true" />
+              {solicitud.telefono}
+            </p>
           )}
         </div>
-        <span className={`text-xs font-semibold px-2.5 py-0.5 rounded-full ${styles.badge}`}>
-          {styles.label}
-        </span>
+        <Badge text={styles.label} variant={solicitud.estado} />
       </div>
 
       {/* Animal + accepted date */}

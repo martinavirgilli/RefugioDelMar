@@ -8,6 +8,7 @@
  */
 
 import { BrowserRouter as Router, Routes, Route, Link } from "react-router-dom";
+import { Compass } from "lucide-react";
 import { AuthProvider } from "./context/AuthContext";
 import Layout from "./components/Layout";
 import ProtectedRoute from "./components/ProtectedRoute";
@@ -80,11 +81,10 @@ function App() {
             <Route path="*" element={
               <Layout>
                 <EmptyState
-                  title="404"
-                  description="Esta página no existe."
-                  action={
-                    <Link to="/"><Button>Ir al inicio</Button></Link>
-                  }
+                  icon={Compass}
+                  title="Esta página se fue a la playa"
+                  description="El link que seguiste no lleva a ningún lado. Volvé al inicio y probá desde ahí."
+                  action={<Button as={Link} to="/">Ir al inicio</Button>}
                 />
               </Layout>
             } />

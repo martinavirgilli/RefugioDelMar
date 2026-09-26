@@ -7,14 +7,19 @@
 
 import { useState, useEffect } from "react";
 import { Link } from "react-router-dom";
+import { CalendarCheck } from "lucide-react";
 import Layout from "../components/Layout";
 import Button from "../components/Button";
+import Badge from "../components/Badge";
+import EmptyState from "../components/EmptyState";
+import { Cargando } from "../components/Skeleton";
 import { solicitudesService } from "../services/api";
+import { formatFechaHora } from "../lib/format";
 
 const estadoInfo = {
-  revision:  { label: "En revisión", cls: "bg-yellow-100 text-yellow-800" },
-  aceptada:  { label: "Aceptada",    cls: "bg-green-100 text-green-800"   },
-  rechazada: { label: "Rechazada",   cls: "bg-red-100 text-red-700"       },
+  revision:  { label: "En revisión" },
+  aceptada:  { label: "Aceptada" },
+  rechazada: { label: "Rechazada" },
 };
 
 export default function MisSolicitudesPage() {
@@ -46,12 +51,7 @@ export default function MisSolicitudesPage() {
   if (loading) {
     return (
       <Layout>
-        <div className="flex items-center justify-center min-h-[50vh]">
-          <div className="flex flex-col items-center gap-3 text-niebla-oscuro">
-            <span className="text-4xl animate-pulse">🐾</span>
-            <span className="text-sm font-medium">Cargando solicitudes...</span>
-          </div>
-        </div>
+        <Cargando texto="Cargando tus solicitudes…" />
       </Layout>
     );
   }
@@ -59,15 +59,10 @@ export default function MisSolicitudesPage() {
   if (error) {
     return (
       <Layout>
-        <div className="bg-red-50 border border-red-200 text-red-700 px-4 py-3 rounded-lg mb-4 text-sm">
+        <div role="alert" className="mb-4 rounded-2xl border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-800">
           {error}
         </div>
-        <button
-          onClick={load}
-          className="px-4 py-2 bg-mar text-white rounded-lg hover:bg-mar-oscuro text-sm font-semibold"
-        >
-          Reintentar
-        </button>
+        <Button variant="secondary" onClick={load}>Reintentar</Button>
       </Layout>
     );
   }
@@ -75,34 +70,26 @@ export default function MisSolicitudesPage() {
   return (
     <Layout>
       <div className="max-w-2xl mx-auto">
-        <h1 className="text-2xl font-extrabold text-mar mb-1">Mis solicitudes</h1>
-        <p className="text-niebla-oscuro text-sm mb-6">Seguí el estado de tus solicitudes de visita.</p>
+        <h1 className="mb-1 text-3xl font-bold text-mar">Mis solicitudes</h1>
+        <p className="mb-8 text-sm text-niebla-oscuro">Seguí el estado de tus pedidos de visita.</p>
 
         {solicitudes.length === 0 ? (
-          <div className="flex flex-col items-center justify-center min-h-[30vh] text-niebla-oscuro gap-3">
-            <span className="text-5xl">🐾</span>
-            <p className="font-medium text-base">Todavía no tenés solicitudes.</p>
-            <p className="text-sm">Explorá los candidatos y pedí una visita.</p>
-            <Link to="/candidatos">
-              <Button className="mt-2">Ver candidatos</Button>
-            </Link>
-          </div>
+          <EmptyState
+            title="Todavía no pediste ninguna visita"
+            description="Mirá el catálogo y pedí conocer al que te guste. Te avisamos cuando el equipo responda."
+            action={<Button as={Link} to="/candidatos">Ver candidatos</Button>}
+          />
         ) : (
           <div className="space-y-4">
             {solicitudes.map((s) => {
               const info = estadoInfo[s.estado] ?? estadoInfo.revision;
-              const fechaFormateada = s.fecha_visita
-                ? new Date(s.fecha_visita).toLocaleDateString("es-AR", {
-                    year: "numeric", month: "long", day: "numeric",
-                    hour: "2-digit", minute: "2-digit",
-                  })
-                : null;
+              const fechaFormateada = s.fecha_visita ? formatFechaHora(s.fecha_visita) : null;
 
               return (
-                <div key={s.id} className="bg-espuma rounded-2xl border border-bruma shadow-sm p-5">
-                  <div className="flex justify-between items-start mb-3">
+                <div key={s.id} className="rounded-card border border-bruma bg-espuma p-5 shadow-suave">
+                  <div className="mb-3 flex items-start justify-between gap-3">
                     <div>
-                      <h3 className="font-bold text-mar text-base">
+                      <h3 className="text-base font-bold text-mar">
                         {s.candidato_detalle?.nombre || `Animal #${s.candidato}`}
                       </h3>
                       {s.candidato_detalle?.especie && (
@@ -111,24 +98,23 @@ export default function MisSolicitudesPage() {
                         </p>
                       )}
                     </div>
-                    <span className={`text-xs font-semibold px-2.5 py-1 rounded-full ${info.cls}`}>
-                      {info.label}
-                    </span>
+                    <Badge text={info.label} variant={s.estado} />
                   </div>
 
                   {/* Accepted date — only shown when the request was accepted */}
                   {fechaFormateada && (
-                    <div className="bg-green-50 border border-green-200 rounded-lg px-4 py-2 mb-3">
-                      <p className="text-sm text-green-800 font-medium">
-                        📅 Fecha de visita: <span className="font-normal">{fechaFormateada}</span>
+                    <div className="mb-3 flex items-center gap-2 rounded-2xl bg-pino/10 px-4 py-2.5">
+                      <CalendarCheck className="size-4 shrink-0 text-pino" aria-hidden="true" />
+                      <p className="text-sm font-semibold text-pino">
+                        Visita: <span className="font-normal text-mar">{fechaFormateada}</span>
                       </p>
                     </div>
                   )}
 
                   {/* Rejection message */}
                   {s.estado === "rechazada" && (
-                    <div className="bg-red-50 border border-red-200 rounded-lg px-4 py-2 mb-3">
-                      <p className="text-sm text-red-700">
+                    <div className="mb-3 rounded-2xl border border-red-200 bg-red-50 px-4 py-2.5">
+                      <p className="text-sm text-red-800">
                         Tu solicitud fue rechazada. Podés intentar con otro candidato.
                       </p>
                     </div>
@@ -136,14 +122,14 @@ export default function MisSolicitudesPage() {
 
                   {/* Pending message */}
                   {s.estado === "revision" && (
-                    <div className="bg-yellow-50 border border-yellow-200 rounded-lg px-4 py-2 mb-3">
-                      <p className="text-sm text-yellow-800">
+                    <div className="mb-3 rounded-2xl bg-duna/15 px-4 py-2.5">
+                      <p className="text-sm text-mar">
                         Tu solicitud está siendo revisada por el equipo del refugio.
                       </p>
                     </div>
                   )}
 
-                  <p className="text-sm text-niebla-oscuro italic mb-2">"{s.motivo}"</p>
+                  <p className="mb-2 text-sm italic text-niebla-oscuro">“{s.motivo}”</p>
                   <p className="text-xs text-niebla-oscuro">
                     Solicitada el {new Date(s.fecha_creacion).toLocaleDateString("es-AR")}
                   </p>

@@ -11,6 +11,8 @@ import Layout from "../components/Layout";
 import Card from "../components/Card";
 import EmptyState from "../components/EmptyState";
 import SolicitudVisitaModal from "../components/SolicitudVisitaModal";
+import Button from "../components/Button";
+import { SkeletonCard } from "../components/Skeleton";
 import { candidatosService } from "../services/api";
 
 export default function CandidatosPage() {
@@ -38,7 +40,7 @@ export default function CandidatosPage() {
       const data = await candidatosService.getAll();
       setCandidatos(Array.isArray(data) ? data : []);
     } catch (err) {
-      setError(err.message || "Error loading candidates");
+      setError(err.message || "Error al cargar los candidatos");
     } finally {
       setLoading(false);
     }
@@ -50,7 +52,7 @@ export default function CandidatosPage() {
       await candidatosService.toggleAdopcion(id);
       await loadCandidatos();
     } catch (err) {
-      setError(err.message || "Error updating adoption status");
+      setError(err.message || "Error al actualizar el estado de adopción");
     }
   };
 
@@ -60,7 +62,7 @@ export default function CandidatosPage() {
       await candidatosService.delete(id);
       await loadCandidatos();
     } catch (err) {
-      setError(err.message || "Error deleting candidate");
+      setError(err.message || "Error al eliminar el candidato");
     }
   };
 
@@ -91,11 +93,13 @@ export default function CandidatosPage() {
   if (loading) {
     return (
       <Layout>
-        <div className="flex items-center justify-center min-h-[50vh]">
-          <div className="flex flex-col items-center gap-3 text-niebla-oscuro">
-            <span className="text-4xl animate-pulse">🐾</span>
-            <span className="text-sm font-medium">Cargando candidatos...</span>
-          </div>
+        <h1 className="text-3xl font-bold text-mar">Candidatos</h1>
+        <p className="mt-1 text-sm text-niebla-oscuro">Buscando a los que esperan una casa…</p>
+        <div
+          className="mt-8 grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-3"
+          aria-busy="true"
+        >
+          {[0, 1, 2, 3, 4, 5].map((i) => <SkeletonCard key={i} />)}
         </div>
       </Layout>
     );
@@ -104,16 +108,11 @@ export default function CandidatosPage() {
   if (error) {
     return (
       <Layout>
-        <div className="max-w-md mx-auto mt-10">
-          <div className="bg-red-50 border border-red-200 text-red-700 px-4 py-3 rounded-lg mb-4 text-sm">
+        <div className="mx-auto mt-10 max-w-md">
+          <div role="alert" className="mb-4 rounded-2xl border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-800">
             {error}
           </div>
-          <button
-            onClick={loadCandidatos}
-            className="px-4 py-2 bg-mar text-white rounded-lg hover:bg-mar-oscuro text-sm font-semibold"
-          >
-            Reintentar
-          </button>
+          <Button variant="secondary" onClick={loadCandidatos}>Reintentar</Button>
         </div>
       </Layout>
     );
@@ -124,7 +123,7 @@ export default function CandidatosPage() {
       {/* ── Page header ── */}
       <div className="flex items-center justify-between mb-6">
         <div>
-          <h1 className="text-2xl font-extrabold text-mar">Candidatos</h1>
+          <h1 className="text-3xl font-bold text-mar">Candidatos</h1>
           <p className="text-niebla-oscuro text-sm mt-0.5">
             Mostrando {filtered.length} de {candidatos.length} candidatos
           </p>

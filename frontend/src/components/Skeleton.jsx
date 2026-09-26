@@ -1,3 +1,5 @@
+import { LoaderCircle } from "lucide-react";
+
 /**
  * Skeleton — bloque gris que ocupa el lugar del contenido mientras carga.
  *
@@ -29,6 +31,22 @@ export function SkeletonCard() {
         <Skeleton className="h-3 w-4/5" />
         <Skeleton className="mt-2 h-10 w-full" />
       </div>
+    </div>
+  );
+}
+
+/**
+ * Cargando — estado de carga para una página entera, cuando un esqueleto con
+ * la forma del contenido no aplica (un detalle, un resumen).
+ *
+ * role="status" hace que el lector de pantalla anuncie el texto sin robarle
+ * el foco a quien esté navegando.
+ */
+export function Cargando({ texto = "Cargando…" }) {
+  return (
+    <div role="status" className="flex min-h-[40vh] flex-col items-center justify-center gap-3">
+      <LoaderCircle className="size-8 animate-spin text-niebla" aria-hidden="true" />
+      <span className="text-sm font-semibold text-niebla-oscuro">{texto}</span>
     </div>
   );
 }

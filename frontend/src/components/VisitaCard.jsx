@@ -10,9 +10,12 @@
  * Once a comment exists the action buttons are hidden.
  */
 
-import Button from "./Button";
 import { useState } from "react";
+import { Phone } from "lucide-react";
+import Button from "./Button";
+import Badge from "./Badge";
 import { visitasService } from "../services/api";
+import { formatFechaHora } from "../lib/format";
 
 // Left-border accent color per visit status
 const borderByEstado = {
@@ -21,12 +24,7 @@ const borderByEstado = {
   cancelada:   "border-l-bruma",
 };
 
-// Status badge colors
-const labelByEstado = {
-  planificada: "bg-arena text-mar",
-  realizada:   "bg-green-100 text-green-800",
-  cancelada:   "bg-espuma text-niebla-oscuro",
-};
+
 
 export default function VisitaCard({ visita, onDelete, onUpdate }) {
   const [showComentarioForm, setShowComentarioForm] = useState(false);
@@ -55,13 +53,9 @@ export default function VisitaCard({ visita, onDelete, onUpdate }) {
   };
 
   // Format the visit date for the Argentine locale
-  const fechaFormateada = new Date(visita.fecha_visita).toLocaleDateString("es-AR", {
-    year: "numeric", month: "long", day: "numeric",
-    hour: "2-digit", minute: "2-digit",
-  });
+  const fechaFormateada = formatFechaHora(visita.fecha_visita);
 
   const borderCls = borderByEstado[visita.estado] ?? "border-l-bruma";
-  const estadoCls = labelByEstado[visita.estado] ?? labelByEstado.planificada;
 
   return (
     <div className={`bg-espuma rounded-2xl border border-bruma border-l-4 ${borderCls} shadow-sm hover:shadow-md transition-shadow p-5`}>
@@ -72,12 +66,13 @@ export default function VisitaCard({ visita, onDelete, onUpdate }) {
           <h3 className="font-bold text-mar text-base">{visita.visitante_nombre}</h3>
           <p className="text-xs text-niebla-oscuro mt-0.5">{visita.visitante_email}</p>
           {visita.visitante_telefono && (
-            <p className="text-xs text-niebla-oscuro">📞 {visita.visitante_telefono}</p>
+            <p className="flex items-center gap-1.5 text-xs text-niebla-oscuro">
+              <Phone className="size-3.5" aria-hidden="true" />
+              {visita.visitante_telefono}
+            </p>
           )}
         </div>
-        <span className={`text-xs font-semibold px-2.5 py-0.5 rounded-full capitalize ${estadoCls}`}>
-          {visita.estado}
-        </span>
+        <Badge text={visita.estado} variant={visita.estado} className="capitalize" />
       </div>
 
       {/* ── Visit details ── */}
@@ -98,9 +93,9 @@ export default function VisitaCard({ visita, onDelete, onUpdate }) {
 
       {/* Final comment box — shown once an admin has completed the visit */}
       {visita.comentario_final && (
-        <div className="bg-green-50 border border-green-100 rounded-lg p-3 mb-3">
-          <p className="text-xs font-semibold text-green-800 mb-1">Comentario final</p>
-          <p className="text-sm text-green-700">{visita.comentario_final}</p>
+        <div className="mb-3 rounded-2xl bg-pino/10 p-3">
+          <p className="mb-1 text-xs font-bold text-pino">Comentario final</p>
+          <p className="text-sm text-mar">{visita.comentario_final}</p>
         </div>
       )}
 
