@@ -1,115 +1,120 @@
 /**
- * Card — displays a single candidate in the grid on CandidatosPage.
+ * Card — tarjeta de un candidato.
  *
- * Props:
- *   candidato — the candidate object from the API
- *   onToggle  — callback to toggle the adopted/available status
- *   onDelete  — callback to delete the candidate (only rendered when provided,
- *               so it's hidden from regular users via the parent page)
+ * Variantes:
+ *   catalogo   — la del listado: acciones de admin (adoptar / eliminar) o
+ *                "Quiero conocerlo/a" para un usuario común.
+ *   destacado  — la de la Home: solo la foto, el nombre y un link al detalle.
+ *
+ * La imagen conserva su alto natural para no recortar caras de animales; por
+ * eso el catálogo la acomoda en columnas tipo masonry.
  */
 
 import { Link } from "react-router-dom";
+import { Heart, PawPrint, Trash2, Undo2 } from "lucide-react";
 import Button from "./Button";
+import Badge from "./Badge";
 import { useAuth } from "../context/AuthContext";
+import { formatEdad, sufijoGenero } from "../lib/format";
 
-export default function Card({ candidato, onToggle, onDelete, onSolicitar }) {
+export default function Card({ candidato, onToggle, onDelete, onSolicitar, variant = "catalogo" }) {
   const { isAdmin } = useAuth();
   const admin = isAdmin();
-  return (
-    <div className="bg-snowmelt rounded-2xl border border-rim/50 shadow-sm hover:shadow-md transition-shadow duration-200 overflow-hidden flex flex-col">
+  const esDestacado = variant === "destacado";
 
-      {/* ── Image section — natural height so tall/wide images are never cropped ── */}
-      <div className="relative w-full bg-rim/30">
+  return (
+    <article className="group flex flex-col overflow-hidden rounded-card border border-bruma/60 bg-espuma shadow-suave transition-shadow duration-300 hover:shadow-elevada">
+
+      {/* ── Foto ── */}
+      <div className="relative w-full bg-bruma/30">
         {candidato.imagen ? (
           <img
             src={candidato.imagen}
-            alt={candidato.nombre}
-            className="w-full h-auto block"
-            onError={(e) => { e.target.style.display = "none"; }}
+            alt={`${candidato.nombre}, ${candidato.especie.toLowerCase()} en adopción`}
+            loading="lazy"
+            decoding="async"
+            className="block h-auto w-full"
+            onError={(e) => { e.currentTarget.style.display = "none"; }}
           />
         ) : (
-          // Placeholder shown when no image URL is available
-          <div className="h-48 flex items-center justify-center">
-            <span className="text-5xl opacity-20">🐾</span>
+          <div className="flex h-52 items-center justify-center">
+            <PawPrint className="size-12 text-niebla/40" aria-hidden="true" />
           </div>
         )}
 
-        {/* Species badge overlaid on the image */}
-        <span className="absolute top-2 left-2 bg-snowmelt/90 text-deep text-xs font-semibold px-2.5 py-0.5 rounded-full shadow-sm capitalize">
-          {candidato.especie}
-        </span>
+        <Badge
+          text={candidato.especie}
+          className="absolute left-3 top-3 bg-espuma/90 capitalize backdrop-blur-sm"
+        />
 
-        {/* "Adopted" ribbon — only shown when the animal has been adopted */}
         {candidato.adoptado && (
-          <div className="absolute top-2 right-2 bg-green-500 text-white text-xs font-bold px-2.5 py-0.5 rounded-full shadow-sm">
-            Adoptado
-          </div>
+          <Badge text="Adoptado" variant="adoptado" icon={Heart} className="absolute right-3 top-3 bg-espuma/90 backdrop-blur-sm" />
         )}
       </div>
 
-      {/* ── Card body ── */}
-      <div className="flex flex-col flex-1 p-4 gap-2">
+      {/* ── Cuerpo ── */}
+      <div className="flex flex-1 flex-col gap-2 p-5">
         <div>
-          <h2 className="text-base font-bold text-deep">{candidato.nombre}</h2>
-          <p className="text-xs text-glacial mt-0.5">
-            {candidato.edad === 0 ? "Menos de 1 año" : `${candidato.edad} ${candidato.edad === 1 ? "año" : "años"}`}
+          <h3 className="text-lg font-bold text-mar">{candidato.nombre}</h3>
+          <p className="mt-0.5 text-xs text-niebla-oscuro">
+            {formatEdad(candidato.edad)}
             {candidato.genero && candidato.genero !== "desconocido" && (
-              <span className="ml-1 capitalize">· {candidato.genero}</span>
+              <span className="capitalize"> · {candidato.genero}</span>
             )}
           </p>
         </div>
 
-        {/* Description is clamped to 3 lines to keep cards uniform in height */}
-        <p className="text-sm text-glacial leading-relaxed line-clamp-3 flex-1">
+        <p className="line-clamp-3 flex-1 text-sm leading-relaxed text-niebla-oscuro">
           {candidato.descripcion}
         </p>
 
-        {/* ── Action buttons ── */}
-        <div className="flex gap-2 pt-2">
-          <Link to={`/candidatos/${candidato.id}`} className="flex-1">
-            <Button variant="secondary" className="w-full text-xs py-1.5">
-              Ver detalles
+        {/* ── Acciones ── */}
+        {esDestacado ? (
+          <Button as={Link} to={`/candidatos/${candidato.id}`} variant="secondary" size="sm" className="mt-3 w-full">
+            Conocé a {candidato.nombre}
+          </Button>
+        ) : (
+          <div className="mt-3 flex flex-wrap gap-2">
+            <Button as={Link} to={`/candidatos/${candidato.id}`} variant="secondary" size="sm" className="flex-1">
+              Ver detalle
             </Button>
-          </Link>
 
-          {admin ? (
-            // Admin: adopt/revert toggle + delete
-            <>
-              <Button
-                variant={candidato.adoptado ? "secondary" : "primary"}
-                className="flex-1 text-xs py-1.5"
-                onClick={() => onToggle && onToggle(candidato.id)}
-              >
-                {candidato.adoptado ? "Revertir" : "Adoptar"}
-              </Button>
-              {onDelete && (
+            {admin ? (
+              <>
                 <Button
-                  variant="danger"
-                  className="text-xs py-1.5 px-3"
-                  onClick={() => {
-                    if (window.confirm(`¿Seguro que querés eliminar a ${candidato.nombre}?`)) {
-                      onDelete(candidato.id);
-                    }
-                  }}
+                  variant={candidato.adoptado ? "ghost" : "primary"}
+                  size="sm"
+                  className="flex-1"
+                  icon={candidato.adoptado ? Undo2 : Heart}
+                  onClick={() => onToggle?.(candidato.id)}
                 >
-                  Eliminar
+                  {candidato.adoptado ? "Revertir" : "Adoptado"}
                 </Button>
-              )}
-            </>
-          ) : (
-            // Regular user: request a visit (only for non-adopted animals)
-            !candidato.adoptado && (
-              <Button
-                variant="primary"
-                className="flex-1 text-xs py-1.5"
-                onClick={() => onSolicitar && onSolicitar(candidato)}
-              >
-                Solicitar visita
-              </Button>
-            )
-          )}
-        </div>
+                {onDelete && (
+                  <Button
+                    variant="danger"
+                    size="sm"
+                    aria-label={`Eliminar a ${candidato.nombre}`}
+                    onClick={() => {
+                      if (window.confirm(`¿Seguro que querés eliminar a ${candidato.nombre}?`)) {
+                        onDelete(candidato.id);
+                      }
+                    }}
+                  >
+                    <Trash2 className="size-4" aria-hidden="true" />
+                  </Button>
+                )}
+              </>
+            ) : (
+              !candidato.adoptado && (
+                <Button variant="acento" size="sm" className="flex-1" onClick={() => onSolicitar?.(candidato)}>
+                  Quiero conocer{sufijoGenero(candidato.genero)}
+                </Button>
+              )
+            )}
+          </div>
+        )}
       </div>
-    </div>
+    </article>
   );
 }

@@ -23,7 +23,13 @@ export default defineConfig([
       },
     },
     rules: {
-      'no-unused-vars': ['error', { varsIgnorePattern: '^[A-Z_]' }],
+      // Los identificadores en mayúscula son componentes: este preset no trae
+      // eslint-plugin-react, así que ESLint no ve que se usan dentro del JSX.
+      // argsIgnorePattern cubre los que llegan como prop (icon: Icon, as: Component).
+      'no-unused-vars': [
+        'error',
+        { varsIgnorePattern: '^[A-Z_]', argsIgnorePattern: '^[A-Z_]' },
+      ],
     },
   },
 ])

@@ -32,7 +32,7 @@ export default function AdopcionesHistorial() {
 
   if (loading) {
     return (
-      <div className="flex flex-col items-center justify-center min-h-[40vh] gap-3 text-glacial">
+      <div className="flex flex-col items-center justify-center min-h-[40vh] gap-3 text-niebla-oscuro">
         <span className="text-4xl animate-pulse">🐾</span>
         <span className="text-sm font-medium">Cargando historial...</span>
       </div>
@@ -47,7 +47,7 @@ export default function AdopcionesHistorial() {
         </div>
         <button
           onClick={loadHistorial}
-          className="px-4 py-2 bg-glacial text-white rounded-lg hover:bg-glacial-dark text-sm font-semibold transition-colors"
+          className="px-4 py-2 bg-niebla text-white rounded-lg hover:bg-niebla-oscuro text-sm font-semibold transition-colors"
         >
           Reintentar
         </button>
@@ -58,7 +58,7 @@ export default function AdopcionesHistorial() {
   if (historial.length === 0) {
     return (
       <div className="flex flex-col items-center justify-center min-h-[40vh]">
-        <p className="text-glacial text-lg">
+        <p className="text-niebla-oscuro text-lg">
           🐾 Aún no hay adopciones registradas.
         </p>
       </div>
@@ -67,18 +67,18 @@ export default function AdopcionesHistorial() {
 
   return (
     <div className="flex flex-col items-center justify-center min-h-[40vh]">
-      <div className="bg-snowmelt shadow-lg rounded-2xl p-8 w-full max-w-lg border border-rim">
-        <h2 className="text-2xl font-bold mb-6 text-center text-glacial">
+      <div className="bg-espuma shadow-lg rounded-2xl p-8 w-full max-w-lg border border-bruma">
+        <h2 className="text-2xl font-bold mb-6 text-center text-niebla-oscuro">
           Historial de adopciones
         </h2>
-        <ul className="space-y-3 text-lg text-deep">
+        <ul className="space-y-3 text-lg text-mar">
           {historial.map((candidato) => (
             <li
               key={candidato.id}
-              className="bg-sun rounded-lg px-4 py-2 shadow-sm flex justify-between items-center border border-rim/50"
+              className="bg-arena rounded-lg px-4 py-2 shadow-sm flex justify-between items-center border border-bruma/50"
             >
               <span className="font-medium">{candidato.nombre}</span>
-              <span className="text-sm text-glacial italic">
+              <span className="text-sm text-niebla-oscuro italic">
                 {candidato.especie}
               </span>
             </li>

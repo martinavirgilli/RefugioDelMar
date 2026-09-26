@@ -51,12 +51,12 @@ export default function NuevoCandidatoPage() {
   return (
     <Layout>
       <div className="flex flex-col items-center justify-center min-h-[70vh]">
-        <h1 className="text-3xl font-bold mb-6 text-center text-deep">
+        <h1 className="text-3xl font-bold mb-6 text-center text-mar">
           Registrar nuevo candidato
         </h1>
         <form
           onSubmit={handleSubmit}
-          className="w-full max-w-md bg-snowmelt shadow-lg rounded-2xl p-6 space-y-4 border border-rim"
+          className="w-full max-w-md bg-espuma shadow-lg rounded-2xl p-6 space-y-4 border border-bruma"
         >
           {error && (
             <div className="bg-red-50 border border-red-200 text-red-700 px-4 py-3 rounded-lg text-sm">
@@ -68,12 +68,12 @@ export default function NuevoCandidatoPage() {
           <Input label="Especie"      value={form.especie}     onChange={handleChange} name="especie"     required />
 
           <div className="flex flex-col gap-1">
-            <label className="text-xs font-semibold text-deep">Género</label>
+            <label className="text-xs font-semibold text-mar">Género</label>
             <select
               name="genero"
               value={form.genero}
               onChange={handleChange}
-              className="border border-rim px-3 py-2 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-forest focus:border-forest bg-snowmelt text-deep"
+              className="border border-bruma px-3 py-2 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-mar focus:border-mar bg-espuma text-mar"
             >
               <option value="macho">Macho</option>
               <option value="hembra">Hembra</option>

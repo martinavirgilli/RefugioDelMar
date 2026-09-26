@@ -44,13 +44,13 @@ export default function LoginPage() {
   return (
     <Layout>
       <div className="flex items-center justify-center min-h-[60vh]">
-        <div className="w-full max-w-sm bg-snowmelt rounded-2xl shadow-lg border border-rim p-8">
+        <div className="w-full max-w-sm bg-espuma rounded-2xl shadow-lg border border-bruma p-8">
 
           {/* Header */}
           <div className="text-center mb-6">
             <span className="text-5xl">🐾</span>
-            <h1 className="text-2xl font-extrabold text-deep mt-3">Bienvenido</h1>
-            <p className="text-glacial text-sm mt-1">Iniciá sesión para gestionar el refugio</p>
+            <h1 className="text-2xl font-extrabold text-mar mt-3">Bienvenido</h1>
+            <p className="text-niebla-oscuro text-sm mt-1">Iniciá sesión para gestionar el refugio</p>
           </div>
 
           <form onSubmit={handleSubmit} className="space-y-4">
@@ -84,9 +84,9 @@ export default function LoginPage() {
           </form>
 
           {/* Link to the registration page for new visitors */}
-          <p className="mt-5 text-sm text-glacial text-center">
+          <p className="mt-5 text-sm text-niebla-oscuro text-center">
             ¿No tenés cuenta?{" "}
-            <Link to="/register" className="text-forest font-semibold hover:underline">
+            <Link to="/register" className="text-mar font-semibold hover:underline">
               Registrate
             </Link>
           </p>

@@ -1,30 +1,32 @@
 /**
- * Layout — shared page shell used by every route.
+ * Layout — el marco que comparten todas las páginas.
  *
- * Renders the top navigation bar, the main content area, and the footer.
- * Navigation items are conditionally shown based on authentication status
- * and admin privileges:
- *   - Unauthenticated: only the Login link is shown.
- *   - Authenticated regular user: Candidates and Adoptions.
- *   - Authenticated admin: also sees New Candidate, Visits, and New Visit.
+ * Header claro y translúcido sobre arena (no la barra oscura de la v1), menú
+ * móvil tipo drawer y footer en mar separado por una ola.
+ *
+ * Los links visibles dependen de la sesión:
+ *   sin sesión        → Inicio, Candidatos, Iniciar sesión
+ *   usuario común     → + Mis solicitudes, Adopciones
+ *   admin             → + Nuevo candidato, Visitas, Nueva visita
+ * Esconder un link no es seguridad: cada acción de admin se valida en el backend.
  */
 
-import { useState } from "react";
-import { NavLink, useNavigate } from "react-router-dom";
+import { useEffect, useRef, useState } from "react";
+import { NavLink, useLocation, useNavigate } from "react-router-dom";
+import { LogOut, Mail, MapPin, Menu, Phone, X } from "lucide-react";
 import { useAuth } from "../context/AuthContext";
 import Button from "./Button";
+import Logo from "./Logo";
 
-/** Single navigation link with active-state styling. */
-function NavItem({ to, children }) {
+/** Link del nav de escritorio, con subrayado suave cuando está activo. */
+function NavItem({ to, children, onClick }) {
   return (
     <NavLink
       to={to}
+      onClick={onClick}
       className={({ isActive }) =>
-        `text-sm font-semibold transition-colors pb-0.5 ${
-          isActive
-            ? "text-sun border-b-2 border-sun"
-            : "text-rim hover:text-white"
-        }`
+        "rounded-full px-3 py-1.5 text-sm font-bold transition-colors duration-200 " +
+        (isActive ? "bg-bruma/50 text-mar" : "text-niebla-oscuro hover:bg-bruma/30 hover:text-mar")
       }
     >
       {children}
@@ -35,108 +37,263 @@ function NavItem({ to, children }) {
 export default function Layout({ children }) {
   const { isAuthenticated, user, logout, isAdmin } = useAuth();
   const navigate = useNavigate();
+  const location = useLocation();
   const [menuOpen, setMenuOpen] = useState(false);
+  const botonMenuRef = useRef(null);
+  const drawerRef = useRef(null);
+
+  const authed = isAuthenticated();
+  const admin = isAdmin();
+
+  const cerrarMenu = () => setMenuOpen(false);
 
   const handleLogout = () => {
     logout();
+    cerrarMenu();
     navigate("/login");
-    setMenuOpen(false);
   };
 
-  const authed = isAuthenticated();
+  // El drawer se cierra al cambiar de ruta
+  useEffect(cerrarMenu, [location.pathname]);
+
+  // Mientras el drawer está abierto: Esc lo cierra, el foco entra adentro,
+  // el fondo no scrollea y al cerrar el foco vuelve al botón que lo abrió.
+  useEffect(() => {
+    if (!menuOpen) return;
+
+    const onKeyDown = (e) => {
+      if (e.key === "Escape") setMenuOpen(false);
+    };
+
+    // Se guarda el botón ahora: en la limpieza el ref ya podría apuntar a otro nodo
+    const botonQueAbrio = botonMenuRef.current;
+
+    document.addEventListener("keydown", onKeyDown);
+    const overflowPrevio = document.body.style.overflow;
+    document.body.style.overflow = "hidden";
+    drawerRef.current?.querySelector("a, button")?.focus();
+
+    return () => {
+      document.removeEventListener("keydown", onKeyDown);
+      document.body.style.overflow = overflowPrevio;
+      botonQueAbrio?.focus();
+    };
+  }, [menuOpen]);
+
+  /** Los mismos links para escritorio y para el drawer. */
+  const links = [
+    { to: "/", label: "Inicio" },
+    { to: "/candidatos", label: "Candidatos" },
+    ...(authed && admin
+      ? [
+          { to: "/nuevo", label: "Nuevo candidato" },
+          { to: "/visitas", label: "Visitas" },
+          { to: "/nueva-visita", label: "Nueva visita" },
+        ]
+      : []),
+    ...(authed && !admin ? [{ to: "/mis-solicitudes", label: "Mis solicitudes" }] : []),
+    ...(authed ? [{ to: "/adopciones", label: "Adopciones" }] : []),
+  ];
 
   return (
-    <div className="min-h-screen flex flex-col bg-sun">
+    <div className="flex min-h-screen flex-col bg-arena">
 
-      {/* ── Header / Navigation ── */}
-      <header className="bg-deep text-white px-6 py-3 shadow-md">
-        <div className="max-w-6xl mx-auto flex items-center justify-between">
+      {/* Salto de navegación: lo primero que encuentra el teclado */}
+      <a
+        href="#contenido"
+        className="sr-only focus:not-sr-only focus:absolute focus:left-4 focus:top-4 focus:z-50 focus:rounded-full focus:bg-mar focus:px-5 focus:py-2.5 focus:text-sm focus:font-bold focus:text-white"
+      >
+        Saltar al contenido
+      </a>
 
-          {/* Brand logo */}
-          <NavLink to="/" className="flex items-center gap-2 text-white hover:text-sun transition-colors">
-            <span className="text-2xl">🐾</span>
-            <span className="font-extrabold text-lg tracking-tight">Refugio del Mar</span>
+      {/* ── Header ── */}
+      <header className="sticky top-0 z-40 border-b border-bruma/60 bg-arena/85 backdrop-blur-md">
+        <div className="mx-auto flex max-w-6xl items-center justify-between gap-3 px-4 py-3 sm:px-6">
+
+          <NavLink
+            to="/"
+            className="flex shrink-0 items-center gap-2.5 rounded-full text-mar transition-opacity hover:opacity-80"
+          >
+            <Logo className="h-9 w-9 shrink-0" olaClassName="text-niebla" />
+            <span className="font-display text-lg font-bold leading-tight tracking-tight">
+              Refugio del Mar
+            </span>
           </NavLink>
 
-          {/* Desktop navigation */}
-          <nav className="hidden md:flex items-center gap-6">
+          {/* Nav de escritorio */}
+          <nav aria-label="Navegación principal" className="hidden items-center gap-1 lg:flex">
+            {links.map((l) => (
+              <NavItem key={l.to} to={l.to}>{l.label}</NavItem>
+            ))}
+          </nav>
+
+          <div className="hidden shrink-0 items-center gap-3 lg:flex">
             {authed ? (
               <>
-                <NavItem to="/">Inicio</NavItem>
-                <NavItem to="/candidatos">Candidatos</NavItem>
-                {isAdmin() ? (
-                  <>
-                    <NavItem to="/nuevo">Nuevo candidato</NavItem>
-                    <NavItem to="/visitas">Visitas</NavItem>
-                    <NavItem to="/nueva-visita">Nueva visita</NavItem>
-                  </>
-                ) : (
-                  <NavItem to="/mis-solicitudes">Mis solicitudes</NavItem>
-                )}
-                <NavItem to="/adopciones">Adopciones</NavItem>
-                {/* Display the logged-in user's email */}
-                <span className="text-xs text-rim ml-2">{user?.email || user?.name}</span>
-                <Button onClick={handleLogout} variant="secondary" className="py-1 px-3 text-xs">
-                  Cerrar sesión
+                <span className="max-w-[14ch] truncate text-xs text-niebla-oscuro" title={user?.email}>
+                  {user?.name || user?.email}
+                </span>
+                <Button variant="secondary" size="sm" icon={LogOut} onClick={handleLogout}>
+                  Salir
                 </Button>
               </>
             ) : (
-              <NavItem to="/login">Iniciar sesión</NavItem>
-            )}
-          </nav>
-
-          {/* Hamburger button — visible on mobile only */}
-          <button
-            className="md:hidden text-white focus:outline-none"
-            onClick={() => setMenuOpen(!menuOpen)}
-            aria-label="Menu"
-          >
-            <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              {menuOpen ? (
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
-              ) : (
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 6h16M4 12h16M4 18h16" />
-              )}
-            </svg>
-          </button>
-        </div>
-
-        {/* Mobile slide-down menu */}
-        {menuOpen && (
-          <div className="md:hidden mt-3 pb-3 border-t border-glacial/30 flex flex-col gap-3 pt-3">
-            {authed ? (
-              <>
-                <NavLink to="/" onClick={() => setMenuOpen(false)} className="text-sm text-rim hover:text-white font-semibold">Inicio</NavLink>
-                <NavLink to="/candidatos" onClick={() => setMenuOpen(false)} className="text-sm text-rim hover:text-white font-semibold">Candidatos</NavLink>
-                {isAdmin() ? (
-                  <>
-                    <NavLink to="/nuevo" onClick={() => setMenuOpen(false)} className="text-sm text-rim hover:text-white font-semibold">Nuevo candidato</NavLink>
-                    <NavLink to="/visitas" onClick={() => setMenuOpen(false)} className="text-sm text-rim hover:text-white font-semibold">Visitas</NavLink>
-                    <NavLink to="/nueva-visita" onClick={() => setMenuOpen(false)} className="text-sm text-rim hover:text-white font-semibold">Nueva visita</NavLink>
-                  </>
-                ) : (
-                  <NavLink to="/mis-solicitudes" onClick={() => setMenuOpen(false)} className="text-sm text-rim hover:text-white font-semibold">Mis solicitudes</NavLink>
-                )}
-                <NavLink to="/adopciones" onClick={() => setMenuOpen(false)} className="text-sm text-rim hover:text-white font-semibold">Adopciones</NavLink>
-                <button onClick={handleLogout} className="text-sm text-red-400 hover:text-red-300 text-left font-semibold">Cerrar sesión</button>
-              </>
-            ) : (
-              <NavLink to="/login" onClick={() => setMenuOpen(false)} className="text-sm text-rim hover:text-white font-semibold">Iniciar sesión</NavLink>
+              <Button as={NavLink} to="/login" size="sm">Iniciá sesión</Button>
             )}
           </div>
-        )}
+
+          {/* Botón del drawer — solo en pantallas chicas */}
+          <button
+            ref={botonMenuRef}
+            type="button"
+            className="rounded-full p-2 text-mar transition-colors hover:bg-bruma/40 lg:hidden"
+            onClick={() => setMenuOpen(true)}
+            aria-label="Abrir menú"
+            aria-expanded={menuOpen}
+            aria-controls="menu-movil"
+          >
+            <Menu className="size-6" aria-hidden="true" />
+          </button>
+        </div>
       </header>
 
-      {/* ── Main content area ── */}
-      <main className="flex-1 w-full max-w-6xl mx-auto px-4 py-8">
+      {/* ── Drawer móvil ── */}
+      {menuOpen && (
+        <div className="fixed inset-0 z-50 lg:hidden">
+          {/* Fondo: clickearlo cierra. No es foco de teclado porque Esc ya cierra. */}
+          <div
+            className="absolute inset-0 bg-mar/50 backdrop-blur-sm"
+            onClick={cerrarMenu}
+            aria-hidden="true"
+          />
+          <div
+            ref={drawerRef}
+            id="menu-movil"
+            role="dialog"
+            aria-modal="true"
+            aria-label="Menú"
+            className="absolute right-0 top-0 flex h-full w-[min(20rem,85vw)] flex-col gap-1 overflow-y-auto bg-arena p-5 shadow-elevada"
+          >
+            <div className="mb-3 flex items-center justify-between">
+              <span className="font-display text-base font-bold text-mar">Menú</span>
+              <button
+                type="button"
+                onClick={cerrarMenu}
+                aria-label="Cerrar menú"
+                className="rounded-full p-2 text-mar transition-colors hover:bg-bruma/40"
+              >
+                <X className="size-5" aria-hidden="true" />
+              </button>
+            </div>
+
+            <nav aria-label="Navegación principal" className="flex flex-col gap-1">
+              {links.map((l) => (
+                <NavLink
+                  key={l.to}
+                  to={l.to}
+                  onClick={cerrarMenu}
+                  className={({ isActive }) =>
+                    "rounded-2xl px-4 py-3 text-sm font-bold transition-colors " +
+                    (isActive ? "bg-bruma/50 text-mar" : "text-niebla-oscuro hover:bg-bruma/30 hover:text-mar")
+                  }
+                >
+                  {l.label}
+                </NavLink>
+              ))}
+            </nav>
+
+            <div className="mt-auto border-t border-bruma pt-4">
+              {authed ? (
+                <>
+                  <p className="mb-3 truncate px-4 text-xs text-niebla-oscuro">{user?.email}</p>
+                  <Button variant="secondary" icon={LogOut} className="w-full" onClick={handleLogout}>
+                    Cerrar sesión
+                  </Button>
+                </>
+              ) : (
+                <Button as={NavLink} to="/login" className="w-full" onClick={cerrarMenu}>
+                  Iniciá sesión
+                </Button>
+              )}
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* ── Contenido ── */}
+      <main id="contenido" className="mx-auto w-full max-w-6xl flex-1 px-4 py-10 sm:px-6">
         {children}
       </main>
 
       {/* ── Footer ── */}
-      <footer className="bg-deep text-rim text-center py-4 text-sm">
-        © {new Date().getFullYear()} Refugio del Mar — Todos los derechos reservados
-      </footer>
+      <footer className="mt-16 text-arena">
+        {/* Divisor de ola: pura decoración, invisible para el lector de pantalla */}
+        <svg
+          viewBox="0 0 1440 80"
+          className="block h-12 w-full text-mar sm:h-16"
+          preserveAspectRatio="none"
+          aria-hidden="true"
+        >
+          <path
+            d="M0 40c120-32 240-32 360 0s240 32 360 0 240-32 360 0 240 32 360 0v40H0Z"
+            fill="currentColor"
+          />
+        </svg>
 
+        <div className="bg-mar">
+          <div className="mx-auto grid max-w-6xl gap-8 px-4 py-12 sm:grid-cols-2 sm:px-6 lg:grid-cols-3">
+
+            <div>
+              <div className="flex items-center gap-2.5">
+                <Logo className="h-9 w-9 shrink-0" olaClassName="text-bruma" />
+                <span className="font-display text-lg font-bold">Refugio del Mar</span>
+              </div>
+              <p className="mt-3 max-w-xs text-sm leading-relaxed text-bruma">
+                Rescatamos, cuidamos y buscamos una casa para los animales de la costa.
+                Desde 2019, en Pinamar.
+              </p>
+            </div>
+
+            <div>
+              <h2 className="font-display text-base font-bold">Visitanos</h2>
+              <ul className="mt-3 space-y-2.5 text-sm text-bruma">
+                <li className="flex items-start gap-2.5">
+                  <MapPin className="mt-0.5 size-4 shrink-0" aria-hidden="true" />
+                  <span>Av. de los Pinos 1450, Pinamar,<br />Buenos Aires</span>
+                </li>
+                <li className="flex items-center gap-2.5">
+                  <Phone className="size-4 shrink-0" aria-hidden="true" />
+                  <a href="tel:+542254400000" className="rounded hover:text-white hover:underline">
+                    +54 2254 40-0000
+                  </a>
+                </li>
+                <li className="flex items-center gap-2.5">
+                  <Mail className="size-4 shrink-0" aria-hidden="true" />
+                  <a href="mailto:hola@refugiodelmar.org" className="rounded hover:text-white hover:underline">
+                    hola@refugiodelmar.org
+                  </a>
+                </li>
+              </ul>
+            </div>
+
+            <div>
+              <h2 className="font-display text-base font-bold">Horarios</h2>
+              <ul className="mt-3 space-y-1.5 text-sm text-bruma">
+                <li>Lunes a viernes, 10 a 17 h</li>
+                <li>Sábados, 10 a 13 h</li>
+                <li>Las visitas se coordinan con turno.</li>
+              </ul>
+            </div>
+          </div>
+
+          <div className="border-t border-niebla/40">
+            <p className="mx-auto max-w-6xl px-4 py-5 text-center text-xs text-bruma sm:px-6">
+              © {new Date().getFullYear()} Refugio del Mar · Proyecto de portafolio.
+              Los animales, las personas y los datos de contacto son ficticios.
+            </p>
+          </div>
+        </div>
+      </footer>
     </div>
   );
 }

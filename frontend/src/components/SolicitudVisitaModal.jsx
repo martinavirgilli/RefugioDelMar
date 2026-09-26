@@ -48,18 +48,18 @@ export default function SolicitudVisitaModal({ candidato, onClose, onSuccess }) 
     }
   };
 
-  const inputCls = "border border-rim px-3 py-2 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-forest focus:border-forest bg-sun text-deep w-full";
+  const inputCls = "border border-bruma px-3 py-2 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-mar focus:border-mar bg-arena text-mar w-full";
 
   return (
-    <div className="fixed inset-0 bg-deep/60 flex items-center justify-center z-50 p-4" onClick={onClose}>
+    <div className="fixed inset-0 bg-mar/60 flex items-center justify-center z-50 p-4" onClick={onClose}>
       <div
-        className="bg-snowmelt rounded-2xl shadow-xl border border-rim w-full max-w-md max-h-[90vh] overflow-y-auto"
+        className="bg-espuma rounded-2xl shadow-xl border border-bruma w-full max-w-md max-h-[90vh] overflow-y-auto"
         onClick={(e) => e.stopPropagation()}
       >
         <div className="p-6">
-          <h2 className="text-xl font-bold text-deep mb-1">Solicitar visita</h2>
-          <p className="text-sm text-glacial mb-5">
-            Querés conocer a <strong className="text-deep">{candidato.nombre}</strong>.
+          <h2 className="text-xl font-bold text-mar mb-1">Solicitar visita</h2>
+          <p className="text-sm text-niebla-oscuro mb-5">
+            Querés conocer a <strong className="text-mar">{candidato.nombre}</strong>.
             Completá el formulario y el equipo del refugio se pondrá en contacto.
           </p>
 
@@ -71,7 +71,7 @@ export default function SolicitudVisitaModal({ candidato, onClose, onSuccess }) 
             )}
 
             <div className="flex flex-col gap-1">
-              <label className="text-sm font-semibold text-deep">Nombre y Apellido *</label>
+              <label className="text-sm font-semibold text-mar">Nombre y Apellido *</label>
               <input
                 name="nombre_apellido"
                 value={form.nombre_apellido}
@@ -83,7 +83,7 @@ export default function SolicitudVisitaModal({ candidato, onClose, onSuccess }) 
             </div>
 
             <div className="flex flex-col gap-1">
-              <label className="text-sm font-semibold text-deep">Email *</label>
+              <label className="text-sm font-semibold text-mar">Email *</label>
               <input
                 name="email"
                 type="email"
@@ -96,7 +96,7 @@ export default function SolicitudVisitaModal({ candidato, onClose, onSuccess }) 
             </div>
 
             <div className="flex flex-col gap-1">
-              <label className="text-sm font-semibold text-deep">Teléfono</label>
+              <label className="text-sm font-semibold text-mar">Teléfono</label>
               <input
                 name="telefono"
                 type="tel"
@@ -108,7 +108,7 @@ export default function SolicitudVisitaModal({ candidato, onClose, onSuccess }) 
             </div>
 
             <div className="flex flex-col gap-1">
-              <label className="text-sm font-semibold text-deep">
+              <label className="text-sm font-semibold text-mar">
                 ¿Por qué querés visitar a {candidato.nombre}? *
               </label>
               <textarea

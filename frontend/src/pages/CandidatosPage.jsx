@@ -92,7 +92,7 @@ export default function CandidatosPage() {
     return (
       <Layout>
         <div className="flex items-center justify-center min-h-[50vh]">
-          <div className="flex flex-col items-center gap-3 text-glacial">
+          <div className="flex flex-col items-center gap-3 text-niebla-oscuro">
             <span className="text-4xl animate-pulse">🐾</span>
             <span className="text-sm font-medium">Cargando candidatos...</span>
           </div>
@@ -110,7 +110,7 @@ export default function CandidatosPage() {
           </div>
           <button
             onClick={loadCandidatos}
-            className="px-4 py-2 bg-forest text-white rounded-lg hover:bg-forest-dark text-sm font-semibold"
+            className="px-4 py-2 bg-mar text-white rounded-lg hover:bg-mar-oscuro text-sm font-semibold"
           >
             Reintentar
           </button>
@@ -124,35 +124,35 @@ export default function CandidatosPage() {
       {/* ── Page header ── */}
       <div className="flex items-center justify-between mb-6">
         <div>
-          <h1 className="text-2xl font-extrabold text-deep">Candidatos</h1>
-          <p className="text-glacial text-sm mt-0.5">
+          <h1 className="text-2xl font-extrabold text-mar">Candidatos</h1>
+          <p className="text-niebla-oscuro text-sm mt-0.5">
             Mostrando {filtered.length} de {candidatos.length} candidatos
           </p>
         </div>
       </div>
 
       {/* ── Filter bar ── */}
-      <div className="bg-snowmelt border border-rim rounded-2xl shadow-sm p-4 mb-6 flex flex-wrap gap-3 items-end">
+      <div className="bg-espuma border border-bruma rounded-2xl shadow-sm p-4 mb-6 flex flex-wrap gap-3 items-end">
 
         {/* Name search */}
         <div className="flex flex-col gap-1 flex-1 min-w-[160px]">
-          <label className="text-xs font-semibold text-deep">Buscar por nombre</label>
+          <label className="text-xs font-semibold text-mar">Buscar por nombre</label>
           <input
             type="text"
             value={search}
             onChange={(e) => setSearch(e.target.value)}
             placeholder="Ej: Max, Luna..."
-            className="border border-rim px-3 py-2 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-forest focus:border-forest transition-colors bg-snowmelt placeholder:text-glacial/60"
+            className="border border-bruma px-3 py-2 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-mar focus:border-mar transition-colors bg-espuma placeholder:text-niebla-oscuro"
           />
         </div>
 
         {/* Species filter */}
         <div className="flex flex-col gap-1 min-w-[140px]">
-          <label className="text-xs font-semibold text-deep">Especie</label>
+          <label className="text-xs font-semibold text-mar">Especie</label>
           <select
             value={especieFilter}
             onChange={(e) => setEspecieFilter(e.target.value)}
-            className="border border-rim px-3 py-2 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-forest focus:border-forest bg-snowmelt text-deep"
+            className="border border-bruma px-3 py-2 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-mar focus:border-mar bg-espuma text-mar"
           >
             <option value="">Todas</option>
             {especies.map((e) => (
@@ -163,11 +163,11 @@ export default function CandidatosPage() {
 
         {/* Adoption status filter */}
         <div className="flex flex-col gap-1 min-w-[140px]">
-          <label className="text-xs font-semibold text-deep">Estado</label>
+          <label className="text-xs font-semibold text-mar">Estado</label>
           <select
             value={estadoFilter}
             onChange={(e) => setEstadoFilter(e.target.value)}
-            className="border border-rim px-3 py-2 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-forest focus:border-forest bg-snowmelt text-deep"
+            className="border border-bruma px-3 py-2 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-mar focus:border-mar bg-espuma text-mar"
           >
             <option value="todos">Todos</option>
             <option value="disponibles">Disponibles</option>
@@ -179,7 +179,7 @@ export default function CandidatosPage() {
         {(search || especieFilter || estadoFilter !== "todos") && (
           <button
             onClick={() => { setSearch(""); setEspecieFilter(""); setEstadoFilter("todos"); }}
-            className="text-xs text-glacial hover:text-deep font-semibold self-end pb-2"
+            className="text-xs text-niebla-oscuro hover:text-mar font-semibold self-end pb-2"
           >
             Limpiar filtros ×
           </button>

@@ -16,16 +16,16 @@ import { visitasService } from "../services/api";
 
 // Left-border accent color per visit status
 const borderByEstado = {
-  planificada: "border-l-forest",
+  planificada: "border-l-mar",
   realizada:   "border-l-green-400",
-  cancelada:   "border-l-rim",
+  cancelada:   "border-l-bruma",
 };
 
 // Status badge colors
 const labelByEstado = {
-  planificada: "bg-sun text-deep",
+  planificada: "bg-arena text-mar",
   realizada:   "bg-green-100 text-green-800",
-  cancelada:   "bg-snowmelt text-glacial",
+  cancelada:   "bg-espuma text-niebla-oscuro",
 };
 
 export default function VisitaCard({ visita, onDelete, onUpdate }) {
@@ -60,19 +60,19 @@ export default function VisitaCard({ visita, onDelete, onUpdate }) {
     hour: "2-digit", minute: "2-digit",
   });
 
-  const borderCls = borderByEstado[visita.estado] ?? "border-l-rim";
+  const borderCls = borderByEstado[visita.estado] ?? "border-l-bruma";
   const estadoCls = labelByEstado[visita.estado] ?? labelByEstado.planificada;
 
   return (
-    <div className={`bg-snowmelt rounded-2xl border border-rim border-l-4 ${borderCls} shadow-sm hover:shadow-md transition-shadow p-5`}>
+    <div className={`bg-espuma rounded-2xl border border-bruma border-l-4 ${borderCls} shadow-sm hover:shadow-md transition-shadow p-5`}>
 
       {/* ── Visitor info & status badge ── */}
       <div className="flex justify-between items-start mb-3">
         <div>
-          <h3 className="font-bold text-deep text-base">{visita.visitante_nombre}</h3>
-          <p className="text-xs text-glacial mt-0.5">{visita.visitante_email}</p>
+          <h3 className="font-bold text-mar text-base">{visita.visitante_nombre}</h3>
+          <p className="text-xs text-niebla-oscuro mt-0.5">{visita.visitante_email}</p>
           {visita.visitante_telefono && (
-            <p className="text-xs text-glacial">📞 {visita.visitante_telefono}</p>
+            <p className="text-xs text-niebla-oscuro">📞 {visita.visitante_telefono}</p>
           )}
         </div>
         <span className={`text-xs font-semibold px-2.5 py-0.5 rounded-full capitalize ${estadoCls}`}>
@@ -82,17 +82,17 @@ export default function VisitaCard({ visita, onDelete, onUpdate }) {
 
       {/* ── Visit details ── */}
       <div className="space-y-1 text-sm mb-3">
-        <p className="text-glacial">
-          <span className="font-semibold text-deep">Animal: </span>
+        <p className="text-niebla-oscuro">
+          <span className="font-semibold text-mar">Animal: </span>
           {/* Show the nested candidate name if available, otherwise fall back to ID */}
           {visita.candidato_detalle?.nombre || `ID ${visita.candidato}`}
         </p>
-        <p className="text-glacial">
-          <span className="font-semibold text-deep">Fecha: </span>
+        <p className="text-niebla-oscuro">
+          <span className="font-semibold text-mar">Fecha: </span>
           {fechaFormateada}
         </p>
         {visita.notas && (
-          <p className="text-glacial italic text-xs mt-1">"{visita.notas}"</p>
+          <p className="text-niebla-oscuro italic text-xs mt-1">"{visita.notas}"</p>
         )}
       </div>
 
@@ -126,13 +126,13 @@ export default function VisitaCard({ visita, onDelete, onUpdate }) {
 
       {/* ── Inline comment form ── */}
       {showComentarioForm && (
-        <div className="mt-3 bg-sun/40 rounded-xl p-4 border border-rim">
+        <div className="mt-3 bg-arena/40 rounded-xl p-4 border border-bruma">
           {error && <p className="text-xs text-red-600 mb-2">{error}</p>}
           <textarea
             value={comentario}
             onChange={(e) => setComentario(e.target.value)}
             placeholder="Escribí las notas finales sobre esta visita..."
-            className="w-full p-3 border border-rim rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-forest focus:border-forest resize-none bg-snowmelt"
+            className="w-full p-3 border border-bruma rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-mar focus:border-mar resize-none bg-espuma"
             rows={3}
           />
           <div className="flex gap-2 mt-2">

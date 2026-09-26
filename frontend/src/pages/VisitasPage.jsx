@@ -59,7 +59,7 @@ export default function VisitasPage() {
     return (
       <Layout>
         <div className="flex items-center justify-center min-h-[50vh]">
-          <div className="flex flex-col items-center gap-3 text-glacial">
+          <div className="flex flex-col items-center gap-3 text-niebla-oscuro">
             <span className="text-4xl animate-pulse">🐾</span>
             <span className="text-sm font-medium">Cargando...</span>
           </div>
@@ -76,7 +76,7 @@ export default function VisitasPage() {
         </div>
         <button
           onClick={loadAll}
-          className="px-4 py-2 bg-glacial text-white rounded-lg hover:bg-glacial-dark text-sm font-semibold transition-colors"
+          className="px-4 py-2 bg-niebla text-white rounded-lg hover:bg-niebla-oscuro text-sm font-semibold transition-colors"
         >
           Reintentar
         </button>
@@ -89,12 +89,12 @@ export default function VisitasPage() {
 
   return (
     <Layout>
-      <h1 className="text-2xl font-bold mb-8 text-deep">Gestión de visitas</h1>
+      <h1 className="text-2xl font-bold mb-8 text-mar">Gestión de visitas</h1>
 
       {/* ── Section 1: Visit requests ── */}
       <section className="mb-10">
         <div className="flex items-center gap-3 mb-4">
-          <h2 className="text-lg font-extrabold text-deep">Solicitudes de visita</h2>
+          <h2 className="text-lg font-extrabold text-mar">Solicitudes de visita</h2>
           {pendientes.length > 0 && (
             <span className="bg-yellow-100 text-yellow-800 text-xs font-bold px-2.5 py-0.5 rounded-full">
               {pendientes.length} pendiente{pendientes.length !== 1 ? "s" : ""}
@@ -103,7 +103,7 @@ export default function VisitasPage() {
         </div>
 
         {solicitudes.length === 0 ? (
-          <p className="text-glacial text-sm">No hay solicitudes de visita aún.</p>
+          <p className="text-niebla-oscuro text-sm">No hay solicitudes de visita aún.</p>
         ) : (
           <>
             {pendientes.length > 0 && (
@@ -121,7 +121,7 @@ export default function VisitasPage() {
 
             {procesadas.length > 0 && (
               <div>
-                <p className="text-xs font-semibold text-glacial uppercase tracking-wide mb-3">
+                <p className="text-xs font-semibold text-niebla-oscuro uppercase tracking-wide mb-3">
                   Procesadas
                 </p>
                 <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
@@ -137,9 +137,9 @@ export default function VisitasPage() {
 
       {/* ── Section 2: Manually scheduled visits ── */}
       <section className="mb-10">
-        <h2 className="text-lg font-extrabold text-deep mb-4">Visitas programadas manualmente</h2>
+        <h2 className="text-lg font-extrabold text-mar mb-4">Visitas programadas manualmente</h2>
         {visitas.length === 0 ? (
-          <p className="text-glacial text-sm">No hay visitas manuales próximas.</p>
+          <p className="text-niebla-oscuro text-sm">No hay visitas manuales próximas.</p>
         ) : (
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
             {visitas.map((visita) => (
@@ -155,8 +155,8 @@ export default function VisitasPage() {
       </section>
 
       {/* ── Section 3: Manual entry at the bottom ── */}
-      <div className="border-t border-rim pt-6">
-        <p className="text-sm text-glacial mb-3">
+      <div className="border-t border-bruma pt-6">
+        <p className="text-sm text-niebla-oscuro mb-3">
           ¿Necesitás cargar una cita a mano? Usá el formulario de programación manual.
         </p>
         <Link to="/nueva-visita">

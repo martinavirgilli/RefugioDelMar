@@ -11,12 +11,12 @@ import { adopcionesService } from "../../services/api";
 /** Individual stat card used in the summary grid. */
 function StatCard({ icon, label, value, accent = false }) {
   return (
-    <div className="bg-snowmelt rounded-2xl border border-rim shadow-sm p-6 text-center flex flex-col items-center gap-2">
+    <div className="bg-espuma rounded-2xl border border-bruma shadow-sm p-6 text-center flex flex-col items-center gap-2">
       <span className="text-4xl">{icon}</span>
-      <span className={`text-4xl font-extrabold ${accent ? "text-forest" : "text-deep"}`}>
+      <span className={`text-4xl font-extrabold ${accent ? "text-mar" : "text-mar"}`}>
         {value ?? "—"}
       </span>
-      <span className="text-sm text-glacial font-medium">{label}</span>
+      <span className="text-sm text-niebla-oscuro font-medium">{label}</span>
     </div>
   );
 }
@@ -45,7 +45,7 @@ export default function AdopcionesResumen() {
 
   if (loading) {
     return (
-      <div className="flex flex-col items-center justify-center min-h-[40vh] gap-3 text-glacial">
+      <div className="flex flex-col items-center justify-center min-h-[40vh] gap-3 text-niebla-oscuro">
         <span className="text-4xl animate-pulse">🐾</span>
         <span className="text-sm font-medium">Cargando resumen...</span>
       </div>
@@ -60,7 +60,7 @@ export default function AdopcionesResumen() {
         </div>
         <button
           onClick={loadResumen}
-          className="px-4 py-2 bg-forest text-white rounded-lg hover:bg-forest-dark text-sm font-semibold transition-colors"
+          className="px-4 py-2 bg-mar text-white rounded-lg hover:bg-mar-oscuro text-sm font-semibold transition-colors"
         >
           Reintentar
         </button>
@@ -70,7 +70,7 @@ export default function AdopcionesResumen() {
 
   return (
     <div className="py-4">
-      <h2 className="text-xl font-extrabold text-deep mb-6 text-center">Resumen de adopciones</h2>
+      <h2 className="text-xl font-extrabold text-mar mb-6 text-center">Resumen de adopciones</h2>
       <div className="grid grid-cols-1 sm:grid-cols-3 gap-5 max-w-2xl mx-auto">
         <StatCard icon="🐾" label="Total candidatos" value={resumen?.total ?? 0} />
         <StatCard icon="❤️" label="Adoptados"        value={resumen?.adoptados ?? 0} accent />

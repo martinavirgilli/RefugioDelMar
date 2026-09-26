@@ -11,7 +11,7 @@ import Button from "./Button";
 
 const estadoStyles = {
   revision:  { border: "border-l-yellow-400", badge: "bg-yellow-100 text-yellow-800", label: "En revisión" },
-  aceptada:  { border: "border-l-forest",     badge: "bg-green-100 text-green-800",   label: "Aceptada"    },
+  aceptada:  { border: "border-l-mar",     badge: "bg-green-100 text-green-800",   label: "Aceptada"    },
   rechazada: { border: "border-l-red-400",    badge: "bg-red-100 text-red-700",       label: "Rechazada"   },
 };
 
@@ -68,15 +68,15 @@ export default function SolicitudAdminCard({ solicitud, onUpdate }) {
   };
 
   return (
-    <div className={`bg-snowmelt rounded-2xl border border-rim border-l-4 ${styles.border} shadow-sm hover:shadow-md transition-shadow p-5`}>
+    <div className={`bg-espuma rounded-2xl border border-bruma border-l-4 ${styles.border} shadow-sm hover:shadow-md transition-shadow p-5`}>
 
       {/* Visitor info & status */}
       <div className="flex justify-between items-start mb-3">
         <div>
-          <h3 className="font-bold text-deep text-base">{solicitud.nombre_apellido}</h3>
-          <p className="text-xs text-glacial mt-0.5">{solicitud.email}</p>
+          <h3 className="font-bold text-mar text-base">{solicitud.nombre_apellido}</h3>
+          <p className="text-xs text-niebla-oscuro mt-0.5">{solicitud.email}</p>
           {solicitud.telefono && (
-            <p className="text-xs text-glacial">📞 {solicitud.telefono}</p>
+            <p className="text-xs text-niebla-oscuro">📞 {solicitud.telefono}</p>
           )}
         </div>
         <span className={`text-xs font-semibold px-2.5 py-0.5 rounded-full ${styles.badge}`}>
@@ -86,25 +86,25 @@ export default function SolicitudAdminCard({ solicitud, onUpdate }) {
 
       {/* Animal + accepted date */}
       <div className="space-y-1 text-sm mb-3">
-        <p className="text-glacial">
-          <span className="font-semibold text-deep">Animal: </span>
+        <p className="text-niebla-oscuro">
+          <span className="font-semibold text-mar">Animal: </span>
           {solicitud.candidato_detalle?.nombre || `ID ${solicitud.candidato}`}
           {solicitud.candidato_detalle?.especie && (
-            <span className="text-glacial/70 capitalize"> — {solicitud.candidato_detalle.especie}</span>
+            <span className="text-niebla-oscuro capitalize"> — {solicitud.candidato_detalle.especie}</span>
           )}
         </p>
         {fechaFormateada && (
-          <p className="text-glacial">
-            <span className="font-semibold text-deep">Fecha fijada: </span>
+          <p className="text-niebla-oscuro">
+            <span className="font-semibold text-mar">Fecha fijada: </span>
             {fechaFormateada}
           </p>
         )}
       </div>
 
       {/* Motivo */}
-      <div className="bg-rim/20 rounded-lg p-3 mb-3">
-        <p className="text-xs font-semibold text-deep mb-1">Motivo de la visita</p>
-        <p className="text-sm text-glacial italic">"{solicitud.motivo}"</p>
+      <div className="bg-bruma/20 rounded-lg p-3 mb-3">
+        <p className="text-xs font-semibold text-mar mb-1">Motivo de la visita</p>
+        <p className="text-sm text-niebla-oscuro italic">"{solicitud.motivo}"</p>
       </div>
 
       {error && <p className="text-xs text-red-600 mb-2">{error}</p>}
@@ -123,14 +123,14 @@ export default function SolicitudAdminCard({ solicitud, onUpdate }) {
 
       {/* Inline date picker shown when accepting */}
       {showAcceptForm && (
-        <div className="mt-3 bg-sun/40 rounded-xl p-4 border border-rim">
-          <label className="text-xs font-semibold text-deep block mb-1">Fecha de visita *</label>
+        <div className="mt-3 bg-arena/40 rounded-xl p-4 border border-bruma">
+          <label className="text-xs font-semibold text-mar block mb-1">Fecha de visita *</label>
           <input
             type="datetime-local"
             value={fechaVisita}
             onChange={(e) => setFechaVisita(e.target.value)}
             min={getMinDate()}
-            className="w-full border border-rim px-3 py-2 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-forest bg-snowmelt mb-3"
+            className="w-full border border-bruma px-3 py-2 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-mar bg-espuma mb-3"
           />
           <div className="flex gap-2">
             <Button className="text-xs py-1.5 flex-1" onClick={handleAceptar} disabled={loading}>

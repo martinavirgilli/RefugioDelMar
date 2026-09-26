@@ -16,7 +16,7 @@ export default function AdopcionesLayout() {
   return (
     <Layout>
       <div className="flex flex-col items-center justify-center min-h-[70vh]">
-        <h1 className="text-3xl font-bold mb-6 text-glacial">
+        <h1 className="text-3xl font-bold mb-6 text-niebla-oscuro">
           Adopciones
         </h1>
 
@@ -28,8 +28,8 @@ export default function AdopcionesLayout() {
             className={({ isActive }) =>
               `pb-2 text-lg font-medium transition-colors ${
                 isActive
-                  ? "text-glacial border-b-4 border-glacial"
-                  : "text-glacial/50 hover:text-glacial"
+                  ? "text-niebla-oscuro border-b-4 border-niebla"
+                  : "text-niebla-oscuro hover:text-niebla-oscuro"
               }`
             }
           >
@@ -40,8 +40,8 @@ export default function AdopcionesLayout() {
             className={({ isActive }) =>
               `pb-2 text-lg font-medium transition-colors ${
                 isActive
-                  ? "text-glacial border-b-4 border-glacial"
-                  : "text-glacial/50 hover:text-glacial"
+                  ? "text-niebla-oscuro border-b-4 border-niebla"
+                  : "text-niebla-oscuro hover:text-niebla-oscuro"
               }`
             }
           >

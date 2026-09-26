@@ -47,7 +47,7 @@ export default function MisSolicitudesPage() {
     return (
       <Layout>
         <div className="flex items-center justify-center min-h-[50vh]">
-          <div className="flex flex-col items-center gap-3 text-glacial">
+          <div className="flex flex-col items-center gap-3 text-niebla-oscuro">
             <span className="text-4xl animate-pulse">🐾</span>
             <span className="text-sm font-medium">Cargando solicitudes...</span>
           </div>
@@ -64,7 +64,7 @@ export default function MisSolicitudesPage() {
         </div>
         <button
           onClick={load}
-          className="px-4 py-2 bg-forest text-white rounded-lg hover:bg-forest-dark text-sm font-semibold"
+          className="px-4 py-2 bg-mar text-white rounded-lg hover:bg-mar-oscuro text-sm font-semibold"
         >
           Reintentar
         </button>
@@ -75,11 +75,11 @@ export default function MisSolicitudesPage() {
   return (
     <Layout>
       <div className="max-w-2xl mx-auto">
-        <h1 className="text-2xl font-extrabold text-deep mb-1">Mis solicitudes</h1>
-        <p className="text-glacial text-sm mb-6">Seguí el estado de tus solicitudes de visita.</p>
+        <h1 className="text-2xl font-extrabold text-mar mb-1">Mis solicitudes</h1>
+        <p className="text-niebla-oscuro text-sm mb-6">Seguí el estado de tus solicitudes de visita.</p>
 
         {solicitudes.length === 0 ? (
-          <div className="flex flex-col items-center justify-center min-h-[30vh] text-glacial gap-3">
+          <div className="flex flex-col items-center justify-center min-h-[30vh] text-niebla-oscuro gap-3">
             <span className="text-5xl">🐾</span>
             <p className="font-medium text-base">Todavía no tenés solicitudes.</p>
             <p className="text-sm">Explorá los candidatos y pedí una visita.</p>
@@ -99,14 +99,14 @@ export default function MisSolicitudesPage() {
                 : null;
 
               return (
-                <div key={s.id} className="bg-snowmelt rounded-2xl border border-rim shadow-sm p-5">
+                <div key={s.id} className="bg-espuma rounded-2xl border border-bruma shadow-sm p-5">
                   <div className="flex justify-between items-start mb-3">
                     <div>
-                      <h3 className="font-bold text-deep text-base">
+                      <h3 className="font-bold text-mar text-base">
                         {s.candidato_detalle?.nombre || `Animal #${s.candidato}`}
                       </h3>
                       {s.candidato_detalle?.especie && (
-                        <p className="text-xs text-glacial mt-0.5 capitalize">
+                        <p className="text-xs text-niebla-oscuro mt-0.5 capitalize">
                           {s.candidato_detalle.especie}
                         </p>
                       )}
@@ -143,8 +143,8 @@ export default function MisSolicitudesPage() {
                     </div>
                   )}
 
-                  <p className="text-sm text-glacial italic mb-2">"{s.motivo}"</p>
-                  <p className="text-xs text-glacial/70">
+                  <p className="text-sm text-niebla-oscuro italic mb-2">"{s.motivo}"</p>
+                  <p className="text-xs text-niebla-oscuro">
                     Solicitada el {new Date(s.fecha_creacion).toLocaleDateString("es-AR")}
                   </p>
                 </div>

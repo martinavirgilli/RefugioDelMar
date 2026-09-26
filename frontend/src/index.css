@@ -1,28 +1,69 @@
 @import "tailwindcss";
 
+/* ===========================================================================
+   Sistema de diseño "Pinamar" — calidez, cuidado, tranquilidad.
+
+   Reglas de contraste (WCAG AA: 4.5:1 texto normal, 3:1 texto grande ≥18.66px
+   bold o ≥24px). Los ratios están medidos, no estimados:
+
+     mar sobre arena/espuma ......... 7.12 / 7.74  ✔ cualquier texto
+     niebla sobre arena ............. 3.40         ✔ solo texto grande e íconos
+     niebla-oscuro sobre arena ...... 5.02         ✔ cualquier texto  ← usar este
+     blanco sobre mar ............... 8.41         ✔
+     blanco sobre atardecer ......... 4.81         ✔ (CTA principal)
+     blanco sobre pino .............. 5.88         ✔
+     atardecer como TEXTO sobre arena 4.07         ✘ usar atardecer-oscuro (5.45)
+     pino como texto sobre espuma ... 5.41         ✔
+     duna sobre cualquier fondo ..... ≤2.99        ✘ NUNCA texto: solo líneas,
+                                                    bordes e ilustración
+   =========================================================================== */
+
 @theme {
-  --color-forest:       #285360;
-  --color-forest-dark:  #1e3f4e;
-  --color-forest-light: #3d7080;
-  --color-sun:          #F2EBE3;
-  --color-snowmelt:     #F8F5F2;
-  --color-rim:          #B4D8D8;
-  --color-glacial:      #5A8595;
-  --color-glacial-dark: #3d6a7a;
-  --color-deep:         #285360;
-  --color-sand:         #AB9172;
+  /* ── Color ── */
+  --color-mar:             #285360;  /* texto principal, botones, footer */
+  --color-mar-oscuro:      #1e3f4e;  /* hover de mar */
+  --color-mar-claro:       #3d7080;  /* variantes, anillos de foco */
+  --color-arena:           #F2EBE3;  /* fondo de página */
+  --color-espuma:          #F8F5F2;  /* superficies: tarjetas, formularios */
+  --color-bruma:           #B4D8D8;  /* fondos suaves, bordes, chips */
+  --color-niebla:          #5A8595;  /* texto secundario GRANDE e íconos */
+  --color-niebla-oscuro:   #3d6a7a;  /* texto secundario chico (AA) */
+  --color-duna:            #AB9172;  /* detalles decorativos, nunca texto */
+  --color-atardecer:       #B05A38;  /* acento cálido del CTA. Usar poco */
+  --color-atardecer-oscuro:#96482B;  /* atardecer cuando es texto o link */
+  --color-pino:            #4F6B57;  /* estado disponible / éxito */
+
+  /* ── Tipografía ── */
+  --font-display: "Fraunces", Georgia, "Times New Roman", serif;
+  --font-sans: "Nunito", system-ui, -apple-system, sans-serif;
+
+  /* ── Formas orgánicas: nada de esquinas duras ── */
+  --radius-card: 1.5rem;
+  --radius-blob: 2.5rem;
+
+  /* ── Sombras suaves, tintadas con el azul del mar ── */
+  --shadow-suave: 0 1px 2px rgb(40 83 96 / 0.04), 0 4px 16px rgb(40 83 96 / 0.06);
+  --shadow-elevada: 0 2px 4px rgb(40 83 96 / 0.05), 0 12px 32px rgb(40 83 96 / 0.10);
+
+  /* ── Animaciones de entrada ── */
+  --animate-surgir: surgir 400ms ease-out both;
+}
+
+@keyframes surgir {
+  from { opacity: 0; transform: translateY(12px); }
+  to   { opacity: 1; transform: none; }
 }
 
 :root {
-  font-family: 'Nunito', system-ui, sans-serif;
+  font-family: var(--font-sans);
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
 }
 
 body {
   margin: 0;
-  background-color: #F2EBE3;
-  color: #285360;
+  background-color: var(--color-arena);
+  color: var(--color-mar);
   min-height: 100vh;
 }
 
@@ -30,4 +71,36 @@ body {
   min-height: 100vh;
   display: flex;
   flex-direction: column;
+}
+
+/* Los títulos usan la serif; el peso variable de Fraunces da la calidez. */
+h1, h2, h3, h4 {
+  font-family: var(--font-display);
+  font-optical-sizing: auto;
+  letter-spacing: -0.01em;
+}
+
+/* Foco visible y consistente en todo lo que se pueda enfocar con teclado. */
+:focus-visible {
+  outline: 2px solid var(--color-mar-claro);
+  outline-offset: 2px;
+}
+
+/* Que un ancla interna no deje el título pegado al header translúcido. */
+html {
+  scroll-behavior: smooth;
+  scroll-padding-top: 5rem;
+}
+
+/* Quien pide menos movimiento, recibe menos movimiento. */
+@media (prefers-reduced-motion: reduce) {
+  html {
+    scroll-behavior: auto;
+  }
+  *, *::before, *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+    scroll-behavior: auto !important;
+  }
 }

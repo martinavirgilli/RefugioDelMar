@@ -41,7 +41,7 @@ export default function CandidatoDetailPage() {
     return (
       <Layout>
         <div className="flex items-center justify-center min-h-[50vh]">
-          <div className="flex flex-col items-center gap-3 text-glacial">
+          <div className="flex flex-col items-center gap-3 text-niebla-oscuro">
             <span className="text-4xl animate-pulse">🐾</span>
             <span className="text-sm font-medium">Cargando...</span>
           </div>
@@ -55,7 +55,7 @@ export default function CandidatoDetailPage() {
       <Layout>
         <Link
           to="/candidatos"
-          className="inline-block px-4 py-2 bg-glacial text-white rounded-lg shadow hover:bg-glacial-dark mb-4 text-sm font-semibold"
+          className="inline-block px-4 py-2 bg-niebla text-white rounded-lg shadow hover:bg-niebla-oscuro mb-4 text-sm font-semibold"
         >
           ← Volver a candidatos
         </Link>
@@ -70,13 +70,13 @@ export default function CandidatoDetailPage() {
     <Layout>
       <Link
         to="/candidatos"
-        className="inline-block px-4 py-2 bg-glacial text-white rounded-lg shadow hover:bg-glacial-dark mb-6 text-sm font-semibold transition-colors"
+        className="inline-block px-4 py-2 bg-niebla text-white rounded-lg shadow hover:bg-niebla-oscuro mb-6 text-sm font-semibold transition-colors"
       >
         ← Volver a candidatos
       </Link>
       <div className="flex justify-center">
-        <div className="max-w-md w-full bg-snowmelt shadow-lg p-6 rounded-2xl text-center border border-rim">
-          <h1 className="text-2xl font-bold text-deep mb-4">{candidato.nombre}</h1>
+        <div className="max-w-md w-full bg-espuma shadow-lg p-6 rounded-2xl text-center border border-bruma">
+          <h1 className="text-2xl font-bold text-mar mb-4">{candidato.nombre}</h1>
           <img
             src={candidato.imagen}
             alt={candidato.nombre}
@@ -86,11 +86,11 @@ export default function CandidatoDetailPage() {
               e.target.src = "/images/default.jpg";
             }}
           />
-          <p className="text-glacial mb-3 leading-relaxed">{candidato.descripcion}</p>
-          <p className="text-deep font-medium">Edad: <span className="text-glacial font-normal">{candidato.edad === 0 ? "Menos de 1 año" : `${candidato.edad} ${candidato.edad === 1 ? "año" : "años"}`}</span></p>
-          <p className="text-deep font-medium">Especie: <span className="text-glacial font-normal capitalize">{candidato.especie}</span></p>
+          <p className="text-niebla-oscuro mb-3 leading-relaxed">{candidato.descripcion}</p>
+          <p className="text-mar font-medium">Edad: <span className="text-niebla-oscuro font-normal">{candidato.edad === 0 ? "Menos de 1 año" : `${candidato.edad} ${candidato.edad === 1 ? "año" : "años"}`}</span></p>
+          <p className="text-mar font-medium">Especie: <span className="text-niebla-oscuro font-normal capitalize">{candidato.especie}</span></p>
           {candidato.genero && (
-            <p className="text-deep font-medium">Género: <span className="text-glacial font-normal capitalize">{candidato.genero}</span></p>
+            <p className="text-mar font-medium">Género: <span className="text-niebla-oscuro font-normal capitalize">{candidato.genero}</span></p>
           )}
         </div>
       </div>

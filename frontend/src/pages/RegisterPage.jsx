@@ -50,13 +50,13 @@ export default function RegisterPage() {
   return (
     <Layout>
       <div className="flex items-center justify-center min-h-[60vh]">
-        <div className="w-full max-w-sm bg-snowmelt rounded-2xl shadow-lg border border-rim p-8">
+        <div className="w-full max-w-sm bg-espuma rounded-2xl shadow-lg border border-bruma p-8">
 
           {/* Header */}
           <div className="text-center mb-6">
             <span className="text-5xl">🐾</span>
-            <h1 className="text-2xl font-extrabold text-deep mt-3">Crear cuenta</h1>
-            <p className="text-glacial text-sm mt-1">Registrate para explorar el refugio</p>
+            <h1 className="text-2xl font-extrabold text-mar mt-3">Crear cuenta</h1>
+            <p className="text-niebla-oscuro text-sm mt-1">Registrate para explorar el refugio</p>
           </div>
 
           <form onSubmit={handleSubmit} className="space-y-1">
@@ -107,9 +107,9 @@ export default function RegisterPage() {
           </form>
 
           {/* Link back to login for returning users */}
-          <p className="mt-5 text-sm text-glacial text-center">
+          <p className="mt-5 text-sm text-niebla-oscuro text-center">
             ¿Ya tenés cuenta?{" "}
-            <Link to="/login" className="text-forest font-semibold hover:underline">
+            <Link to="/login" className="text-mar font-semibold hover:underline">
               Iniciá sesión
             </Link>
           </p>
