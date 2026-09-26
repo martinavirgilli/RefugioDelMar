@@ -1,0 +1,39 @@
+# Entorno de desarrollo del backend: PostgreSQL + Django.
+# Levantar con `make up` (o `docker compose up`) desde esta carpeta.
+services:
+  db:
+    image: postgres:16-alpine
+    container_name: refugio_db
+    environment:
+      POSTGRES_DB: ${DB_NAME:-refugio_db}
+      POSTGRES_USER: ${DB_USER:-refugio_user}
+      POSTGRES_PASSWORD: ${DB_PASSWORD:-refugio_pass}
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    ports:
+      - "5432:5432"
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${DB_USER:-refugio_user} -d ${DB_NAME:-refugio_db}"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  web:
+    build: .
+    container_name: refugio_api
+    command: python manage.py runserver 0.0.0.0:8000
+    volumes:
+      - .:/app
+    ports:
+      - "8000:8000"
+    env_file:
+      - .env
+    depends_on:
+      db:
+        condition: service_healthy
+    environment:
+      # Dentro de la red de compose la base se llama "db", no "localhost"
+      DATABASE_URL: postgresql://${DB_USER:-refugio_user}:${DB_PASSWORD:-refugio_pass}@db:5432/${DB_NAME:-refugio_db}
+
+volumes:
+  postgres_data:

@@ -16,22 +16,26 @@ export default function CandidatoDetailPage() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
 
+  // Re-fetch whenever the ID in the URL changes
   useEffect(() => {
-    loadCandidato();
-  }, [id]); // Re-fetch whenever the ID in the URL changes
+    let cancelled = false;
 
-  const loadCandidato = async () => {
-    try {
-      setLoading(true);
-      setError("");
-      const data = await candidatosService.getById(id);
-      setCandidato(data);
-    } catch (err) {
-      setError(err.message || "Error loading candidate");
-    } finally {
-      setLoading(false);
-    }
-  };
+    const loadCandidato = async () => {
+      try {
+        setLoading(true);
+        setError("");
+        const data = await candidatosService.getById(id);
+        if (!cancelled) setCandidato(data);
+      } catch (err) {
+        if (!cancelled) setError(err.message || "Error al cargar el candidato");
+      } finally {
+        if (!cancelled) setLoading(false);
+      }
+    };
+
+    loadCandidato();
+    return () => { cancelled = true; };
+  }, [id]);
 
   if (loading) {
     return (

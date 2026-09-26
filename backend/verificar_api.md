@@ -5,7 +5,7 @@
 ### 1. Verificar que las migraciones estén aplicadas
 
 ```bash
-cd src/api
+cd backend
 docker-compose exec web python manage.py showmigrations
 ```
 

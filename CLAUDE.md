@@ -9,26 +9,25 @@ Autora: Martina. Prefiere guía directa y con opinión (no listas de opciones ab
 
 - **Frontend:** React 19 + Vite 7 + React Router 7 + Tailwind CSS 4 (`@tailwindcss/vite`, tokens en `@theme` dentro de `src/index.css`). JS, sin TypeScript.
 - **Backend:** Django 5 + Django REST Framework + JWT (`simplejwt`) + `django-cors-headers` + `whitenoise` + `gunicorn`. Configuración por `.env` con `django-environ`.
-- **Base de datos:** PostgreSQL (`DATABASE_URL`). Hubo una versión MySQL (ver `src/api/MIGRACION_MYSQL.md`), hoy inactiva.
+- **Base de datos:** PostgreSQL (`DATABASE_URL`). Hubo una versión MySQL (ver `backend/MIGRACION_MYSQL.md`), hoy inactiva.
 - **Deploy v1:** Netlify (frontend, https://refugio-del-mar.netlify.app) + Render (backend). Hay Dockerfiles y `nginx.conf`.
 
-## Estructura actual (v1)
+## Estructura (v2, desde la Fase 0)
 
 ```
-/                       ← frontend en la raíz (package.json, index.html, vite.config.js)
+frontend/               ← app React (package.json, index.html, vite.config.js, Dockerfile, nginx.conf)
   src/
     App.jsx             ← árbol de rutas (públicas / ProtectedRoute / ProtectedAdminRoute)
-    index.css           ← Tailwind + tokens de color
-    components/         ← Button, Card, Badge, Input, EmptyState, Layout, VisitaCard, SolicitudAdminCard, SolicitudVisitaModal, rutas protegidas
+    index.css           ← Tailwind + tokens de color en @theme
+    components/         ← Button, Card, Badge, Input, EmptyState, Skeleton, Layout, Logo, VisitaCard, SolicitudAdminCard, SolicitudVisitaModal, rutas protegidas
     context/AuthContext.jsx   ← sesión (token y user en localStorage)
     pages/              ← Home, Login, Register, Candidatos, CandidatoDetail, NuevoCandidato, Visitas, NuevaVisita, MisSolicitudes, adopciones/*
-    services/api.js     ← TODA la comunicación con el backend (apiRequest + candidatosService, adopcionesService, visitasService, solicitudesService)
-    api/                ← ⚠ el BACKEND Django vive acá (src/api/), no es código del frontend
-      apps/auth_app | candidatos | visitas | adopciones
-      refugio_api/      ← settings, urls
+    services/api.js     ← TODA la comunicación con el backend (apiRequest + parseErrorResponse + authService, candidatosService, adopcionesService, visitasService, solicitudesService)
+backend/                ← API Django (manage.py, requirements.txt, Dockerfile, docker-compose.yml)
+  apps/auth_app | candidatos | visitas | adopciones
+  refugio_api/          ← settings, urls (solo API: ya no sirve el frontend)
+docs/                   ← PLAN_V2.md, PROMPT_INICIAL.md
 ```
-
-En la v2 se va a separar en `frontend/` y `backend/` (ver `docs/PLAN_V2.md`, Fase 0).
 
 ## Dominio
 
@@ -45,7 +44,7 @@ En la v2 se va a separar en `frontend/` y `backend/` (ver `docs/PLAN_V2.md`, Fas
 ## Comandos
 
 - Frontend: `npm install`, `npm run dev`, `npm run build`, `npm run lint` (desde la carpeta del frontend).
-- Backend (desde `src/api/` hoy): `python manage.py migrate`, `python manage.py runserver`, `python manage.py test`, o `make up` con Docker.
+- Backend (desde `backend/`): `python manage.py migrate`, `python manage.py runserver`, `python manage.py test`, o `make up` con Docker.
 - Variables: frontend `VITE_API_URL` (default `http://localhost:8000`); backend `SECRET_KEY`, `DEBUG`, `DATABASE_URL`, `CORS_ALLOWED_ORIGINS`, `JWT_SECRET_KEY`.
 
 ## Convenciones

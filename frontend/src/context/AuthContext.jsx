@@ -14,7 +14,12 @@ import { authService } from "../services/api";
 
 const AuthContext = createContext(null);
 
-/** Hook to consume the auth context from any component. */
+/**
+ * Hook to consume the auth context from any component.
+ * It lives next to the provider on purpose; the only cost is that Fast Refresh
+ * reloads this module instead of hot-patching it.
+ */
+// eslint-disable-next-line react-refresh/only-export-components
 export const useAuth = () => {
   const context = useContext(AuthContext);
   if (!context) {

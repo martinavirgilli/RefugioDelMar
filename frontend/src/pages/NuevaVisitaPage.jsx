@@ -40,7 +40,7 @@ export default function NuevaVisitaPage() {
       const data = await candidatosService.getAll();
       setCandidatos(data);
     } catch (err) {
-      setError("Error loading candidates");
+      setError(err.message || "Error al cargar los candidatos");
     } finally {
       setLoadingCandidatos(false);
     }

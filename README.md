@@ -1,112 +1,128 @@
-# 🐾 Refugio del Mar
+# Refugio del Mar
 
-A full-stack web application for managing an animal shelter — built as a final portfolio project.
+Aplicación web full-stack para gestionar un refugio de animales ficticio, inspirado en Pinamar (Argentina).
+Los adoptantes conocen a los animales y piden una visita; el equipo del refugio gestiona candidatos,
+solicitudes y visitas.
 
-**Live demo:** https://refugio-del-mar.netlify.app
+**Demo (v1):** https://refugio-del-mar.netlify.app
 
----
-
-## What is this?
-
-Refugio del Mar is a shelter management system where staff can keep track of animals available for adoption, schedule visits from potential adopters, and monitor adoption statistics.
-
-The application has two types of users:
-
-- **Regular users** — can create an account, browse the available animals, view their profiles, and check adoption stats.
-- **Admin users** — have full management access: they can add new animals, mark them as adopted, schedule and manage visits, and leave notes after a visit is completed.
+> Este repositorio está en desarrollo de la **v2**: rediseño completo, catálogo público, panel de métricas
+> y automatización con n8n + IA. El plan está en [`docs/PLAN_V2.md`](docs/PLAN_V2.md).
 
 ---
 
-## Features
+## Estructura
 
-- User registration and login with JWT authentication
-- Animal candidate listing with search and filter by name, species, and status
-- Individual animal profile pages
-- Adoption summary dashboard (total, adopted, available)
-- Adoption history log
-- Scheduled visits management (admin)
-- Responsive design — works on desktop and mobile
+```
+frontend/   App React (Vite + Tailwind). Se despliega en Netlify.
+backend/    API REST en Django + DRF. Se despliega en Render.
+docs/       Plan de la v2 y notas de trabajo.
+```
 
----
-
-## Tech stack
-
-| Layer          | Technology                                |
-|----------------|-------------------------------------------|
-| Frontend       | React 19, React Router, Tailwind CSS      |
-| Backend        | Django 5, Django REST Framework           |
-| Authentication | JWT (djangorestframework-simplejwt)       |
-| Database       | PostgreSQL                                |
-| Hosting        | Netlify (frontend) + Render (backend)     |
+El frontend y el backend son dos aplicaciones independientes que se comunican solo por HTTP:
+Django no sirve el frontend.
 
 ---
 
-## How to use it
+## Stack
 
-1. Open the app and click **Sign up** to create a free account.
-2. Once logged in, go to **Candidates** to browse the animals at the shelter.
-3. Click on any animal to see its full profile.
-4. Head to **Adoptions** to see the summary and history of adoptions.
-
-Admin features (visible only to staff accounts):
-- **New Candidate** — register a new animal at the shelter.
-- **Visits** — view all upcoming scheduled visits.
-- **New Visit** — schedule a visit between a potential adopter and an animal.
-
----
----
-
-# 🐾 Refugio del Mar
-
-Una aplicación web full-stack para la gestión de un refugio de animales — desarrollada como proyecto final de portfolio.
-
-**Demo en vivo:** _[link a tu app desplegada]_
+| Capa            | Tecnología                                          |
+|-----------------|-----------------------------------------------------|
+| Frontend        | React 19, Vite 7, React Router 7, Tailwind CSS 4     |
+| Backend         | Django 5.2 LTS, Django REST Framework 3.16           |
+| Autenticación   | JWT (djangorestframework-simplejwt)                  |
+| Base de datos   | PostgreSQL                                           |
+| Deploy          | Netlify (frontend) + Render (backend)                |
 
 ---
 
-## ¿De qué se trata?
+## Cómo levantarlo en local
 
-Refugio del Mar es un sistema de gestión de refugio donde el personal puede llevar el registro de los animales disponibles para adopción, coordinar visitas de posibles adoptantes y hacer seguimiento de las estadísticas de adopción.
+Hacen falta Node 20+, Python 3.12+ y PostgreSQL (o Docker).
 
-La aplicación tiene dos tipos de usuarios:
+### Backend
 
-- **Usuarios regulares** — pueden crear una cuenta, explorar los animales disponibles, ver sus perfiles y consultar las estadísticas de adopción.
-- **Usuarios administradores** — tienen acceso completo de gestión: pueden agregar nuevos animales, marcarlos como adoptados, programar y administrar visitas, y dejar comentarios una vez que una visita se concretó.
+```bash
+cd backend
+python -m venv .venv
+source .venv/bin/activate          # Windows: .venv\Scripts\activate
+pip install -r requirements.txt
+cp .env.example .env               # completá SECRET_KEY y DATABASE_URL
+python manage.py migrate
+python manage.py createsuperuser   # para poder entrar como admin
+python manage.py runserver         # http://localhost:8000
+```
 
----
+Con Docker, desde `backend/`: `make up` (levanta PostgreSQL + Django).
 
-## Funcionalidades
+### Frontend
 
-- Registro de usuarios e inicio de sesión con autenticación JWT
-- Listado de candidatos a adopción con búsqueda y filtros por nombre, especie y estado
-- Perfiles individuales de cada animal
-- Panel de resumen de adopciones (total, adoptados, disponibles)
-- Historial de adopciones
-- Gestión de visitas programadas (solo admin)
-- Diseño responsive — funciona en escritorio y celular
-
----
-
-## Tecnologías utilizadas
-
-| Capa              | Tecnología                                |
-|-------------------|-------------------------------------------|
-| Frontend          | React 19, React Router, Tailwind CSS      |
-| Backend           | Django 5, Django REST Framework           |
-| Autenticación     | JWT (djangorestframework-simplejwt)       |
-| Base de datos     | PostgreSQL                                |
-| Hosting           | Netlify (frontend) + Render (backend)     |
+```bash
+cd frontend
+npm install
+cp .env.example .env.local         # VITE_API_URL=http://localhost:8000
+npm run dev                        # http://localhost:5173
+```
 
 ---
 
-## Cómo usarlo
+## Comandos
 
-1. Abrí la app y hacé clic en **Registrarse** para crear una cuenta gratuita.
-2. Una vez dentro, andá a **Candidatos** para explorar los animales del refugio.
-3. Hacé clic en cualquier animal para ver su perfil completo.
-4. Entrá a **Adopciones** para ver el resumen e historial de adopciones.
+| Carpeta    | Comando                    | Qué hace                         |
+|------------|----------------------------|----------------------------------|
+| `frontend` | `npm run dev`              | Servidor de desarrollo           |
+| `frontend` | `npm run build`            | Build de producción en `dist/`   |
+| `frontend` | `npm run lint`             | ESLint                           |
+| `backend`  | `python manage.py check`   | Chequeo de configuración         |
+| `backend`  | `python manage.py test`    | Tests                            |
+| `backend`  | `make up` / `make down`    | Docker Compose                   |
 
-Funciones de administrador (visibles solo para cuentas de staff):
-- **Nuevo Candidato** — registrar un nuevo animal en el refugio.
-- **Visitas** — ver todas las visitas próximas programadas.
-- **Nueva Visita** — programar una visita entre un posible adoptante y un animal.
+Para correr los tests del backend sin levantar PostgreSQL:
+
+```bash
+DATABASE_URL=sqlite:///dev.sqlite3 python manage.py test
+```
+
+---
+
+## API
+
+Todos los endpoints cuelgan de `/api/`.
+
+| Método | Endpoint                                  | Acceso          |
+|--------|-------------------------------------------|-----------------|
+| POST   | `auth/login`, `auth/register`             | Público         |
+| GET    | `candidatos/`, `candidatos/{id}/`         | Autenticado     |
+| POST/PUT/DELETE | `candidatos/`, `candidatos/{id}/`| Admin           |
+| PATCH  | `candidatos/{id}/adoptar/`                | Admin           |
+| GET    | `adopciones/resumen`, `adopciones/historial` | Autenticado  |
+| GET/POST/DELETE | `visitas/`                       | Admin           |
+| PATCH  | `visitas/{id}/agregar_comentario/`        | Admin           |
+| GET/POST | `visitas/solicitudes/`                  | Autenticado (ve solo las suyas) |
+| PATCH  | `visitas/solicitudes/{id}/aceptar/` · `/rechazar/` | Admin  |
+| POST   | `token/`, `token/refresh/`                | Público         |
+
+Filtros de `candidatos/` por query string: `search`, `especie`, `adoptado`.
+
+---
+
+## Roles
+
+- **Usuario común:** navega el catálogo, ve el detalle de cada animal y pide visitas.
+- **Admin** (`is_staff` o `is_superuser`): además carga y edita candidatos, marca adopciones,
+  agenda visitas y acepta o rechaza solicitudes.
+
+Los permisos se validan siempre en el backend: el frontend solo esconde botones.
+
+---
+
+## Variables de entorno
+
+Cada carpeta tiene su `.env.example` documentado. El `.env` real nunca se commitea.
+
+- `frontend/.env.example` → `VITE_API_URL`
+- `backend/.env.example` → `SECRET_KEY`, `DEBUG`, `DATABASE_URL`, `CORS_ALLOWED_ORIGINS`, `JWT_SECRET_KEY`
+
+---
+
+Los datos del proyecto (animales, personas, testimonios) son **ficticios**.

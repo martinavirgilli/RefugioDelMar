@@ -143,9 +143,6 @@ USE_TZ = True
 STATIC_URL = 'static/'
 STATIC_ROOT = os.path.join(BASE_DIR, 'staticfiles')
 
-# Directory where the built React frontend is placed after running `npm run build`
-FRONTEND_DIR = os.path.join(BASE_DIR, 'frontend')
-
 # WhiteNoise compresses and fingerprints static files for efficient long-term caching
 STATICFILES_STORAGE = 'whitenoise.storage.CompressedManifestStaticFilesStorage'
 
