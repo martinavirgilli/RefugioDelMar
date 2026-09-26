@@ -1,10 +1,8 @@
 /**
  * VisitaCard — displays a single scheduled visit on the VisitasPage.
  *
- * Left-border color and status badge color change based on the visit state:
- *   planificada (scheduled) → forest green
- *   realizada   (completed) → green
- *   cancelada   (cancelled) → rim grey
+ * A colored left border signals the visit state: mar (planificada),
+ * pino (realizada) y bruma (cancelada).
  *
  * Admins can add a final comment to a visit, which marks it as 'realizada'.
  * Once a comment exists the action buttons are hidden.
@@ -20,7 +18,7 @@ import { formatFechaHora } from "../lib/format";
 // Left-border accent color per visit status
 const borderByEstado = {
   planificada: "border-l-mar",
-  realizada:   "border-l-green-400",
+  realizada:   "border-l-pino",
   cancelada:   "border-l-bruma",
 };
 
@@ -58,7 +56,7 @@ export default function VisitaCard({ visita, onDelete, onUpdate }) {
   const borderCls = borderByEstado[visita.estado] ?? "border-l-bruma";
 
   return (
-    <div className={`bg-espuma rounded-2xl border border-bruma border-l-4 ${borderCls} shadow-sm hover:shadow-md transition-shadow p-5`}>
+    <div className={`rounded-card border border-bruma border-l-4 bg-espuma p-5 shadow-suave transition-shadow hover:shadow-elevada ${borderCls}`}>
 
       {/* ── Visitor info & status badge ── */}
       <div className="flex justify-between items-start mb-3">

@@ -69,7 +69,7 @@ export default function SolicitudAdminCard({ solicitud, onUpdate }) {
   };
 
   return (
-    <div className={`bg-espuma rounded-2xl border border-bruma border-l-4 ${styles.border} shadow-sm hover:shadow-md transition-shadow p-5`}>
+    <div className={`rounded-card border border-bruma border-l-4 bg-espuma p-5 shadow-suave transition-shadow hover:shadow-elevada ${styles.border}`}>
 
       {/* Visitor info & status */}
       <div className="flex justify-between items-start mb-3">
