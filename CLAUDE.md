@@ -19,19 +19,25 @@ frontend/               ← app React (package.json, index.html, vite.config.js,
   src/
     App.jsx             ← árbol de rutas (públicas / ProtectedRoute / ProtectedAdminRoute)
     index.css           ← Tailwind + tokens de color en @theme
-    components/         ← Button, Card, Badge, Input, EmptyState, Skeleton, Layout, Logo, VisitaCard, SolicitudAdminCard, SolicitudVisitaModal, rutas protegidas
+    components/         ← Button, Card, Badge, Input, EmptyState, Skeleton, Layout, Logo, Galeria, VisitaCard, SolicitudAdminCard, SolicitudVisitaModal, ColaboracionModal, NuevaVisitaForm, PanelCandidatos, FichaEditor, FichaAdmin, ResenasAdmin, rutas protegidas
     context/AuthContext.jsx   ← sesión (token y user en localStorage)
-    pages/              ← Home, Login, Register, Candidatos, CandidatoDetail, NuevoCandidato, Visitas, NuevaVisita, MisSolicitudes, adopciones/*
-    services/api.js     ← TODA la comunicación con el backend (apiRequest + parseErrorResponse + authService, candidatosService, adopcionesService, visitasService, solicitudesService)
+    pages/              ← Home, Login, Register, Catalogo (reparte entre Candidatos público y PanelCandidatos admin), CandidatoDetail, NuevoCandidato, Visitas, Colaboraciones, MisSolicitudes, adopciones/*
+    services/api.js     ← TODA la comunicación con el backend (apiRequest + parseErrorResponse + authService, candidatosService, adopcionesService, visitasService, solicitudesService, colaboracionesService)
 backend/                ← API Django (manage.py, requirements.txt, Dockerfile, docker-compose.yml)
-  apps/auth_app | candidatos | visitas | adopciones
+  apps/auth_app | candidatos | visitas | adopciones | colaboraciones
   refugio_api/          ← settings, urls (solo API: ya no sirve el frontend)
 docs/                   ← PLAN_V2.md, PROMPT_INICIAL.md
 ```
 
 ## Dominio
 
-- **Candidato**: animal del refugio (nombre, especie, género, edad, descripción, imagen URL, `adoptado`).
+- **Candidato**: animal del refugio (nombre, especie, género, `etapa` de vida, descripción, imagen URL de portada, `apto_salida`, `adoptado` + `fecha_adopcion` y `adoptante`).
+  - **No hay edad en años**: casi todos llegan de la calle. `etapa` es `cachorro | joven | adulto`, estimada por el veterinario.
+  - **Adoptado = archivado**: la ficha sale del catálogo público y solo la abre el refugio (el detalle responde 404 a cualquier otro). Lo que queda público de una adopción son los números de `/adopciones` y las reseñas.
+  - `apto_salida` marca a quiénes alguien puede llevarse por el día ("Un día afuera", sección de la Home).
+- **CandidatoFoto**: foto de la galería. Viene de un archivo subido (`archivo`) o de una URL pegada (`url`), nunca de las dos.
+- **Resena**: cómo le fue a un adoptado, contada por su familia. La carga el refugio (no hay formulario público); `publicada` decide si se muestra.
+- **Colaboracion**: alguien que se ofrece como voluntario o como hogar de tránsito. `POST` público, gestión solo admin.
 - **SolicitudVisita**: un usuario pide conocer a un candidato. Estados: `revision → aceptada | rechazada`. Al aceptar, el admin fija `fecha_visita`.
 - **Visita**: visita agendada (por admin o al aceptar una solicitud). Estados: `planificada → realizada | cancelada`. `comentario_final` la marca como realizada.
 - **Adopcion**: modelo existente pero **sin uso**; hoy el historial se deriva de `Candidato.adoptado` + `fecha_actualizacion` (impreciso). Se corrige en la v2.
@@ -39,7 +45,9 @@ docs/                   ← PLAN_V2.md, PROMPT_INICIAL.md
 
 ## API (prefijo `/api/`)
 
-`auth/login`, `auth/register`, `candidatos/` (+ `PATCH candidatos/{id}/adoptar/`), `visitas/` (+ `PATCH visitas/{id}/agregar_comentario/`), `visitas/solicitudes/` (+ `aceptar/`, `rechazar/`), `adopciones/resumen`, `adopciones/historial`, `token/`, `token/refresh/`. Filtros de candidatos por query: `search`, `especie`, `adoptado`.
+`auth/login`, `auth/register`, `auth/usuarios/buscar`, `auth/usuarios/crear`, `candidatos/` (+ `adoptar/`, `especies/`, `fotos/`, `resenas/`, `actividad/`), `candidatos/resenas/` (reseñas publicadas, público), `visitas/` (+ `agregar_comentario/`), `visitas/solicitudes/` (+ `aceptar/`, `rechazar/`), `colaboraciones/`, `adopciones/resumen`, `adopciones/historial`, `token/`, `token/refresh/`.
+
+Filtros de candidatos por query: `search`, `especie`, `genero`, `etapa`, `apto_salida`, `orden` (`recientes|antiguos|nombre`), `page`/`page_size`. `adoptado=true` es solo para admin: sin sesión de refugio devuelve vacío.
 
 ## Comandos
 
