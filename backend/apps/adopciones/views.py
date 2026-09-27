@@ -2,10 +2,13 @@
 Read-only endpoints with the shelter's adoption numbers.
 
 They are public: the counters and the "finales felices" gallery are part of
-the public home page, so they cannot require an account.
+the public home page, so they cannot require an account. Note what is public
+here is the aggregate, not the animals' records — an adopted animal's file is
+archived and only the shelter can open it.
 
-The data is still derived from `Candidato.adoptado` + `fecha_actualizacion`,
-which is imprecise. Recording real Adopcion rows is Fase 3 of the plan.
+The adoption date now comes from `Candidato.fecha_adopcion`, which the shelter
+sets (and can correct) when marking the adoption. Rows created before that
+field existed fall back to `fecha_actualizacion`, the old approximation.
 """
 
 from collections import Counter
@@ -18,12 +21,25 @@ from rest_framework.permissions import AllowAny
 from rest_framework.response import Response
 import logging
 
+from apps.auth_app.permissions import es_admin
 from apps.candidatos.models import Candidato
 
 logger = logging.getLogger('apps.adopciones')
 
 MESES = ['ene', 'feb', 'mar', 'abr', 'may', 'jun',
          'jul', 'ago', 'sep', 'oct', 'nov', 'dic']
+
+
+def fecha_de_adopcion(candidato):
+    """
+    When this animal was adopted, as a date.
+
+    Prefers the date the shelter recorded; falls back to the last update for
+    records that predate the field.
+    """
+    if candidato.fecha_adopcion:
+        return candidato.fecha_adopcion
+    return timezone.localtime(candidato.fecha_actualizacion).date()
 
 
 @api_view(['GET'])
@@ -48,7 +64,7 @@ def resumen_adopciones(request):
 
         indice = {m['clave']: m for m in meses}
         for c in adoptados:
-            fecha = timezone.localtime(c.fecha_actualizacion)
+            fecha = fecha_de_adopcion(c)
             mes = indice.get((fecha.year, fecha.month))
             if mes:
                 mes['cantidad'] += 1
@@ -81,13 +97,21 @@ def resumen_adopciones(request):
 @permission_classes([AllowAny])
 def historial_adopciones(request):
     """
-    Animals that already found a home, most recent first.
+    Animals that already found a home, most recent adoption first.
 
-    Uses `fecha_actualizacion` as the adoption date because no separate
-    adoption event is stored yet.
+    Carries `resenas` so /adopciones can show the family's story next to the
+    animal, and `adoptante` so the shelter sees who took them home. It is the
+    curated public view of an adoption; the animal's own record stays internal.
     """
     try:
-        adoptados = Candidato.objects.filter(adoptado=True).order_by('-fecha_actualizacion')
+        adoptados = (
+            Candidato.objects
+            .filter(adoptado=True)
+            .prefetch_related('resenas')
+        )
+        # El nombre de quien adoptó es dato interno del refugio: la galería
+        # pública muestra al animal y la historia que mandó la familia.
+        muestra_adoptante = es_admin(request)
 
         historial = [
             {
@@ -95,12 +119,16 @@ def historial_adopciones(request):
                 'nombre': c.nombre,
                 'especie': c.especie,
                 'genero': c.genero,
-                'edad': c.edad,
+                'etapa': c.etapa,
                 'imagen': c.imagen,
-                'fecha_adopcion': c.fecha_actualizacion.isoformat(),
+                'adoptante': c.adoptante if muestra_adoptante else '',
+                'fecha_adopcion': fecha_de_adopcion(c).isoformat(),
+                # Contado sobre el prefetch, para no consultar una vez por fila
+                'resenas': sum(1 for r in c.resenas.all() if r.publicada),
             }
             for c in adoptados
         ]
+        historial.sort(key=lambda fila: fila['fecha_adopcion'], reverse=True)
 
         return Response(historial, status=status.HTTP_200_OK)
 

@@ -110,6 +110,12 @@ class SolicitudVisitaViewSet(viewsets.ModelViewSet):
         candidato = self.request.query_params.get('candidato')
         if candidato:
             queryset = queryset.filter(candidato_id=candidato)
+
+        # El panel del refugio pregunta cuántas esperan respuesta
+        estado = self.request.query_params.get('estado')
+        if estado:
+            queryset = queryset.filter(estado=estado)
+
         return queryset
 
     def perform_create(self, serializer):

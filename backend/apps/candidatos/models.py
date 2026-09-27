@@ -1,7 +1,6 @@
 # Data model for animals available (or previously available) for adoption.
 
 from django.core.exceptions import ValidationError
-from django.core.validators import MinValueValidator
 from django.db import models
 
 
@@ -9,9 +8,14 @@ class Candidato(models.Model):
     """
     Represents an animal at the shelter that is a candidate for adoption.
 
+    Most of these animals came off the street, so nobody knows their exact
+    age: instead of a number, `etapa` records the life stage the vet
+    estimated (cachorro / joven / adulto).
+
     The `adoptado` flag is toggled when the animal finds a home. An adopted
-    candidate is archived rather than deleted: it stays in the catalogue under
-    "Ya encontraron casa" so its record can still be looked up.
+    candidate is archived rather than deleted: its record leaves the public
+    catalogue but stays available to the shelter, with the adoption date and
+    the adopter's name for the record.
 
     `imagen` is the cover photo; extra photos for the detail gallery live in
     the related CandidatoFoto rows.
@@ -23,13 +27,34 @@ class Candidato(models.Model):
         ('desconocido', 'Desconocido'),
     ]
 
+    # Estimated life stage. A street animal has no birth date, so this is as
+    # precise as the shelter can honestly be.
+    ETAPA_CHOICES = [
+        ('cachorro', 'Cachorro'),
+        ('joven', 'Joven'),
+        ('adulto', 'Adulto'),
+    ]
+
     nombre = models.CharField(max_length=100)
     especie = models.CharField(max_length=50)  # e.g. Perro, Gato, Conejo
     genero = models.CharField(max_length=20, choices=GENERO_CHOICES, default='desconocido')
-    edad = models.PositiveIntegerField(validators=[MinValueValidator(0)])
+    etapa = models.CharField(max_length=20, choices=ETAPA_CHOICES, default='adulto')
     descripcion = models.TextField()
     imagen = models.URLField(blank=True, null=True)  # External image URL (cover)
+
+    # "Un día afuera": the shelter marks who can spend a day out with a
+    # visitor. Not every animal is ready for it, so it is opt-in per animal.
+    apto_salida = models.BooleanField(
+        default=False,
+        help_text='Puede salir por el día con una persona que lo venga a buscar.',
+    )
+
     adoptado = models.BooleanField(default=False)
+    # Set when the animal is marked as adopted. Kept as its own field because
+    # fecha_actualizacion moves on every edit and made the date unreliable.
+    fecha_adopcion = models.DateField(blank=True, null=True)
+    adoptante = models.CharField(max_length=120, blank=True)
+
     fecha_creacion = models.DateTimeField(auto_now_add=True)
     fecha_actualizacion = models.DateTimeField(auto_now=True)
 
@@ -75,7 +100,7 @@ class CandidatoFoto(models.Model):
         verbose_name_plural = 'Fotos de candidatos'
 
     def clean(self):
-        """A photo needs exactly one source: a file or a link, never both."""
+        """A gallery photo needs exactly one source: a file or a link."""
         if bool(self.archivo) == bool(self.url):
             raise ValidationError(
                 'Cargá una foto o pegá una URL, pero no las dos cosas a la vez.'
@@ -88,3 +113,57 @@ class CandidatoFoto(models.Model):
 
     def __str__(self):
         return f"Foto {self.orden} de {self.candidato.nombre}"
+
+
+class Resena(models.Model):
+    """
+    How it went after the adoption, told by the family that adopted.
+
+    The shelter writes these down from what the adopter sends them (a
+    message, a photo), so they are created from the admin side rather than
+    submitted through a public form: there is no way to verify online that
+    whoever writes is really the person who adopted.
+
+    `publicada` lets the shelter hold one back without deleting it.
+    """
+
+    candidato = models.ForeignKey(
+        'Candidato',
+        on_delete=models.CASCADE,
+        related_name='resenas',
+    )
+    autor = models.CharField(
+        max_length=120,
+        help_text='Quién la cuenta, como quiera aparecer: "Familia Ferreyra, Ostende".',
+    )
+    texto = models.TextField()
+    # A photo is optional here: some families send a message and no picture.
+    archivo = models.ImageField(upload_to='resenas/%Y/%m/', blank=True, null=True)
+    url = models.URLField(blank=True, null=True)
+    publicada = models.BooleanField(
+        default=True,
+        help_text='Si está apagado, la reseña queda guardada pero no se muestra.',
+    )
+    fecha_creacion = models.DateTimeField(auto_now_add=True)
+
+    class Meta:
+        ordering = ['-fecha_creacion']
+        verbose_name = 'Reseña'
+        verbose_name_plural = 'Reseñas'
+
+    def clean(self):
+        """The photo is optional, but it cannot come from both places at once."""
+        if self.archivo and self.url:
+            raise ValidationError(
+                'Cargá una foto o pegá una URL, pero no las dos cosas a la vez.'
+            )
+
+    @property
+    def src(self):
+        """The photo to render, or None when the family sent only a message."""
+        if self.archivo:
+            return self.archivo.url
+        return self.url or None
+
+    def __str__(self):
+        return f"Reseña de {self.candidato.nombre} por {self.autor}"

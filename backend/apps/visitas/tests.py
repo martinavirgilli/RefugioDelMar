@@ -32,7 +32,7 @@ class SolicitudVisitaFlowTests(APITestCase):
             password='secret1234', is_staff=True,
         )
         cls.candidato = Candidato.objects.create(
-            nombre='Malena', especie='perro', genero='hembra', edad=3,
+            nombre='Malena', especie='perro', genero='hembra', etapa='joven',
             descripcion='Mestiza tranquila.',
         )
 
@@ -151,7 +151,7 @@ class VisitaManualTests(APITestCase):
             password='secret1234', first_name='Ana Duarte',
         )
         cls.candidato = Candidato.objects.create(
-            nombre='Malena', especie='perro', genero='hembra', edad=3,
+            nombre='Malena', especie='perro', genero='hembra', etapa='joven',
             descripcion='Mestiza tranquila.',
         )
 

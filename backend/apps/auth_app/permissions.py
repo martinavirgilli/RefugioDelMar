@@ -17,3 +17,17 @@ class IsAdmin(permissions.BasePermission):
             request.user.is_authenticated and
             (request.user.is_staff or request.user.is_superuser)
         )
+
+
+def es_admin(request):
+    """
+    Same rule as IsAdmin, as a plain function.
+
+    Views need it outside the permission system too: some endpoints are public
+    but answer with more detail for the shelter than for a visitor.
+    """
+    usuario = getattr(request, 'user', None)
+    return bool(
+        usuario and usuario.is_authenticated
+        and (usuario.is_staff or usuario.is_superuser)
+    )
