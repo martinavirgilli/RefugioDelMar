@@ -4,12 +4,18 @@
  * Provides login, register, and logout functions to the entire app,
  * plus the current user object and authentication state.
  *
- * The JWT access token and user data are persisted in localStorage so
- * the session survives a page refresh. On mount, both values are read
- * back and restored to state before rendering protected routes.
+ * The JWT access token and user data are persisted in localStorage so the
+ * session survives a page refresh. They are read back while the state is being
+ * created — not in an effect — so the very first render already knows who is
+ * logged in.
+ *
+ * Restoring it in an effect meant every reload rendered once as a stranger: the
+ * header showed "Iniciá sesión" for a frame and /candidatos mounted the public
+ * catalogue before swapping to the shelter's panel, firing requests nobody
+ * needed. Reading localStorage is synchronous, so there is nothing to wait for.
  */
 
-import { createContext, useContext, useState, useEffect } from "react";
+import { createContext, useContext, useState } from "react";
 import { authService } from "../services/api";
 
 const AuthContext = createContext(null);
@@ -28,22 +34,28 @@ export const useAuth = () => {
   return context;
 };
 
+/**
+ * Read the persisted session once, when the provider's state is created.
+ *
+ * Anything unreadable (a half-written value, a browser that blocks storage)
+ * counts as "no session": es preferible pedir que inicie sesión de nuevo antes
+ * que dejar la app a medio andar.
+ */
+const sesionGuardada = () => {
+  try {
+    const token = localStorage.getItem("token");
+    const user = localStorage.getItem("user");
+    if (!token || !user) return { token: null, user: null };
+    return { token, user: JSON.parse(user) };
+  } catch {
+    return { token: null, user: null };
+  }
+};
+
 export function AuthProvider({ children }) {
-  const [user, setUser] = useState(null);
-  const [token, setToken] = useState(null);
-  const [loading, setLoading] = useState(true); // True while restoring session from localStorage
-
-  // Restore session from localStorage on first render
-  useEffect(() => {
-    const storedToken = localStorage.getItem("token");
-    const storedUser = localStorage.getItem("user");
-
-    if (storedToken && storedUser) {
-      setToken(storedToken);
-      setUser(JSON.parse(storedUser));
-    }
-    setLoading(false);
-  }, []);
+  const [sesion] = useState(sesionGuardada);
+  const [user, setUser] = useState(sesion.user);
+  const [token, setToken] = useState(sesion.token);
 
   /**
    * Persist the session returned by the API and update the context state.
@@ -101,7 +113,6 @@ export function AuthProvider({ children }) {
     logout,
     isAuthenticated,
     isAdmin,
-    loading,
   };
 
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;

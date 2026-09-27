@@ -7,7 +7,9 @@
  *   ProtectedAdminRoute — shelter staff only (/nuevo, /visitas, /colaboraciones)
  *
  * The catalogue is public on purpose: an account is asked for only when
- * someone wants to request a visit.
+ * someone wants to request a visit. /candidatos shows the public grid to
+ * visitors and the shelter's panel to admins (see CatalogoPage); the records of
+ * adopted animals are archived and only the shelter can open them.
  */
 
 import { BrowserRouter as Router, Routes, Route, Link } from "react-router-dom";
@@ -22,7 +24,7 @@ import EmptyState from "./components/EmptyState";
 import HomePage from "./pages/HomePage";
 import LoginPage from "./pages/LoginPage";
 import RegisterPage from "./pages/RegisterPage";
-import CandidatosPage from "./pages/CandidatosPage";
+import CatalogoPage from "./pages/CatalogoPage";
 import CandidatoDetailPage from "./pages/CandidatoDetailPage";
 import NuevoCandidatoPage from "./pages/NuevoCandidatoPage";
 import VisitasPage from "./pages/VisitasPage";
@@ -41,7 +43,7 @@ function App() {
 
           {/* ── Public ── */}
           <Route path="/"                element={<HomePage />} />
-          <Route path="/candidatos"      element={<CandidatosPage />} />
+          <Route path="/candidatos"      element={<CatalogoPage />} />
           <Route path="/candidatos/:id"  element={<CandidatoDetailPage />} />
           <Route path="/login"           element={<LoginPage />} />
           <Route path="/register"        element={<RegisterPage />} />
@@ -73,7 +75,7 @@ function App() {
               <EmptyState
                 icon={Compass}
                 title="Esta página se fue a la playa"
-                description="El link que seguiste no lleva a ningún lado. Volvé al inicio y probá desde ahí."
+                description="El link que seguiste no lleva a ningún lado. Volvé al inicio e intenta de nuevo."
                 action={<Button as={Link} to="/">Ir al inicio</Button>}
               />
             </Layout>

@@ -8,13 +8,17 @@
  * filtrado se puede compartir o volver a él con el botón Atrás. La lista
  * arranca corta y crece con "Ver más" en vez de traer todo de una.
  *
- * Los adoptados no se mezclan con los que buscan casa: quedan archivados en
- * una sección plegada al final, que se carga recién cuando se abre.
+ * Acá solo se ven los que buscan casa. Cuando un animal se adopta, su ficha se
+ * archiva: sale del catálogo y queda en el panel del refugio. La regla la aplica
+ * el backend, no esta página.
+ *
+ * Quien mira siempre es alguien de afuera: el equipo del refugio va al panel
+ * (ver CatalogoPage, que reparte según quién entra).
  */
 
 import { useCallback, useEffect, useRef, useState } from "react";
 import { useSearchParams } from "react-router-dom";
-import { ChevronDown, Search, SlidersHorizontal, X } from "lucide-react";
+import { Search, SlidersHorizontal, Sun, X } from "lucide-react";
 import Layout from "../components/Layout";
 import Card from "../components/Card";
 import Button from "../components/Button";
@@ -45,6 +49,7 @@ export default function CandidatosPage() {
   const especie = searchParams.get("especie") ?? "";
   const genero = searchParams.get("genero") ?? "";
   const orden = searchParams.get("orden") ?? "recientes";
+  const salida = searchParams.get("salida") ?? "";
 
   // El input de búsqueda se escribe local y recién después se lleva a la URL,
   // para no disparar una consulta por cada tecla.
@@ -61,11 +66,7 @@ export default function CandidatosPage() {
   const [especies, setEspecies] = useState([]);
   const [seleccionado, setSeleccionado] = useState(null);
 
-  // Archivo de adoptados: se carga solo cuando alguien abre la sección
-  const [adoptados, setAdoptados] = useState(null);
-  const [cargandoAdoptados, setCargandoAdoptados] = useState(false);
-
-  const hayFiltros = Boolean(search || especie || genero) || orden !== "recientes";
+  const hayFiltros = Boolean(search || especie || genero || salida) || orden !== "recientes";
 
   /** Cambia un filtro y reinicia la paginación. */
   const setFiltro = useCallback((clave, valor) => {
@@ -112,7 +113,7 @@ export default function CandidatosPage() {
         setCargando(true);
         setError("");
         const datos = await candidatosService.getAll(
-          { search, especie, genero, orden, adoptado: "false", page: 1, page_size: POR_PAGINA },
+          { search, especie, genero, orden, apto_salida: salida, page: 1, page_size: POR_PAGINA },
           { redirectOn401: false },
         );
         if (cancelado) return;
@@ -129,14 +130,14 @@ export default function CandidatosPage() {
 
     cargar();
     return () => { cancelado = true; };
-  }, [search, especie, genero, orden]);
+  }, [search, especie, genero, orden, salida]);
 
   const verMas = async () => {
     try {
       setCargandoMas(true);
       const siguiente = pagina + 1;
       const datos = await candidatosService.getAll(
-        { search, especie, genero, orden, adoptado: "false", page: siguiente, page_size: POR_PAGINA },
+        { search, especie, genero, orden, apto_salida: salida, page: siguiente, page_size: POR_PAGINA },
         { redirectOn401: false },
       );
       setCandidatos((previos) => [...previos, ...datos.resultados]);
@@ -146,52 +147,6 @@ export default function CandidatosPage() {
       setError(err.message || "Error al cargar más candidatos");
     } finally {
       setCargandoMas(false);
-    }
-  };
-
-  const abrirArchivo = async (abierto) => {
-    if (!abierto || adoptados !== null) return;
-    try {
-      setCargandoAdoptados(true);
-      const datos = await candidatosService.getAll(
-        { adoptado: "true", orden: "recientes", page_size: 48 },
-        { redirectOn401: false },
-      );
-      setAdoptados(datos.resultados);
-    } catch {
-      setAdoptados([]);
-    } finally {
-      setCargandoAdoptados(false);
-    }
-  };
-
-  /** Recarga la página actual tras una acción de admin. */
-  const recargar = async () => {
-    const datos = await candidatosService.getAll(
-      { search, especie, genero, orden, adoptado: "false", page_size: POR_PAGINA * pagina },
-      { redirectOn401: false },
-    );
-    setCandidatos(datos.resultados);
-    setTotal(datos.total);
-    setHayMas(datos.hayMas);
-    setAdoptados(null); // el archivo cambió: que se vuelva a pedir al abrirlo
-  };
-
-  const handleToggleAdopcion = async (id) => {
-    try {
-      await candidatosService.toggleAdopcion(id);
-      await recargar();
-    } catch (err) {
-      setError(err.message || "Error al actualizar el estado de adopción");
-    }
-  };
-
-  const handleDelete = async (id) => {
-    try {
-      await candidatosService.delete(id);
-      await recargar();
-    } catch (err) {
-      setError(err.message || "Error al eliminar el candidato");
     }
   };
 
@@ -205,8 +160,7 @@ export default function CandidatosPage() {
       <header className="mb-8">
         <h1 className="text-3xl font-bold text-mar sm:text-4xl">Buscan una casa</h1>
         <p className="mt-2 max-w-2xl text-sm leading-relaxed text-niebla-oscuro">
-          Mirá sus fichas con calma. Para conocer a alguno en persona te vamos a pedir una cuenta;
-          para mirar, no.
+          ¡Mirá sus fichas para conocerlos! Para hacerle una visita y conocerlo en persona, te vamos a pedir una cuenta.
         </p>
       </header>
 
@@ -299,6 +253,19 @@ export default function CandidatosPage() {
         </div>
       </search>
 
+      {/* Se llega acá desde la Home, con el filtro ya puesto en la URL */}
+      {salida === "true" && (
+        <div className="mb-6 flex flex-wrap items-center justify-between gap-3 rounded-card bg-atardecer/10 px-5 py-4">
+          <p className="flex items-center gap-2 text-sm font-semibold text-mar">
+            <Sun className="size-4 shrink-0 text-atardecer-oscuro" aria-hidden="true" />
+            Estos pueden salir a pasear por el día con vos.
+          </p>
+          <Button variant="ghost" size="sm" icon={X} onClick={() => setFiltro("salida", "")}>
+            Ver todos
+          </Button>
+        </div>
+      )}
+
       {error && (
         <div role="alert" className="mb-6 rounded-2xl border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-800">
           {error}
@@ -320,13 +287,7 @@ export default function CandidatosPage() {
         <>
           <div className="grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-3">
             {candidatos.map((c) => (
-              <Card
-                key={c.id}
-                candidato={c}
-                onToggle={handleToggleAdopcion}
-                onDelete={handleDelete}
-                onSolicitar={setSeleccionado}
-              />
+              <Card key={c.id} candidato={c} onSolicitar={setSeleccionado} />
             ))}
           </div>
 
@@ -339,43 +300,6 @@ export default function CandidatosPage() {
           )}
         </>
       )}
-
-      {/* ── Archivo de adoptados ── */}
-      <details
-        className="group mt-16 rounded-card border border-bruma/60 bg-espuma/60 shadow-suave"
-        onToggle={(e) => abrirArchivo(e.currentTarget.open)}
-      >
-        <summary className="flex cursor-pointer list-none items-center justify-between gap-3 rounded-card px-5 py-4 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-mar-claro focus-visible:ring-offset-2 focus-visible:ring-offset-arena">
-          <span>
-            <span className="font-display text-lg font-bold text-mar">Ya encontraron casa</span>
-            <span className="mt-0.5 block text-xs text-niebla-oscuro">
-              Fichas archivadas de los que se fueron con su familia.
-            </span>
-          </span>
-          <ChevronDown
-            className="size-5 shrink-0 text-niebla transition-transform group-open:rotate-180"
-            aria-hidden="true"
-          />
-        </summary>
-
-        <div className="border-t border-bruma p-5">
-          {cargandoAdoptados ? (
-            <div className="grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-3" aria-busy="true">
-              {Array.from({ length: 3 }, (_, i) => <SkeletonCard key={i} />)}
-            </div>
-          ) : adoptados && adoptados.length > 0 ? (
-            <div className="grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-3">
-              {adoptados.map((c) => (
-                <Card key={c.id} candidato={c} onToggle={handleToggleAdopcion} onDelete={handleDelete} />
-              ))}
-            </div>
-          ) : (
-            <p className="py-6 text-center text-sm text-niebla-oscuro">
-              Todavía no hay fichas archivadas.
-            </p>
-          )}
-        </div>
-      </details>
 
       {seleccionado && (
         <SolicitudVisitaModal

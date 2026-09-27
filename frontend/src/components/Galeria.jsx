@@ -46,7 +46,10 @@ export default function Galeria({ fotos = [], nombre, especie = "animal" }) {
       aria-label={`Fotos de ${nombre}`}
       tabIndex={hayVarias ? 0 : -1}
       onKeyDown={onKeyDown}
-      className="relative overflow-hidden rounded-card bg-bruma/30 shadow-suave focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-mar-claro focus-visible:ring-offset-2 focus-visible:ring-offset-arena"
+      // self-start: la ficha es una grilla de dos columnas y sin esto el
+      // carrusel se estira hasta el alto de la columna de al lado, dejando una
+      // franja de fondo abajo de la foto (y los puntos despegados de ella).
+      className="relative self-start overflow-hidden rounded-card bg-bruma/30 shadow-suave focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-mar-claro focus-visible:ring-offset-2 focus-visible:ring-offset-arena"
     >
       <ul className="m-0 list-none p-0">
         {fotos.map((foto, i) => (

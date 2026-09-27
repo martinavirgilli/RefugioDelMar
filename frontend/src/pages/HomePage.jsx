@@ -1,18 +1,20 @@
 /**
  * HomePage — la puerta de entrada del refugio.
  *
- * Seis secciones: hero, impacto, candidatos destacados, cómo adoptar,
- * historias y cómo ayudar.
+ * Siete secciones: hero, impacto, candidatos destacados, cómo adoptar, un día
+ * afuera, historias de las familias y cómo ayudar.
  *
- * Los datos son siempre reales: el catálogo y el resumen ya son públicos, así
- * que no hace falta contenido de ejemplo ni degradar nada sin sesión.
+ * Los datos son siempre reales: el catálogo, el resumen y las reseñas ya son
+ * públicos, así que no hace falta contenido de ejemplo ni degradar nada sin
+ * sesión. Las historias salen de las reseñas que carga el refugio; si todavía
+ * no hay ninguna publicada, la sección no se muestra.
  */
 
 import { useEffect, useState } from "react";
 import { Link } from "react-router-dom";
 import {
-  ArrowRight, CalendarHeart, Gift, Handshake, Heart, HeartHandshake,
-  House, MapPin, PawPrint, Quote, Search, Sparkles,
+  ArrowRight, CalendarHeart, Clock, Gift, Handshake, Heart, HeartHandshake,
+  House, IdCard, MapPin, PawPrint, Quote, Search, Sparkles, Sun,
 } from "lucide-react";
 import Layout from "../components/Layout";
 import Button from "../components/Button";
@@ -24,9 +26,6 @@ import { adopcionesService, candidatosService } from "../services/api";
 import portada640 from "../assets/images/portada-640.webp";
 import portada1024 from "../assets/images/portada-1024.webp";
 import portada1600 from "../assets/images/portada-1600.webp";
-import fotoMalena from "../assets/images/candidato5.jpg";
-import fotoTuco from "../assets/images/candidato7.jpg";
-import fotoBruno from "../assets/images/candidato3.jpg";
 
 // ── Contenido de la página ────────────────────────────────────────────────
 
@@ -43,24 +42,22 @@ const PASOS = [
   { icon: House, titulo: "Llevalo a casa", texto: "Si los dos están cómodos, se va con vos castrado, vacunado y con seguimiento nuestro." },
 ];
 
-const HISTORIAS = [
+/** Cómo funciona "Un día afuera", en tres pasos. */
+const PASOS_SALIDA = [
   {
-    nombre: "Malena", foto: fotoMalena, cuando: "adoptada en marzo de 2026",
-    alt: "Retrato de Malena, perra mestiza marrón y blanca, mirando a cámara",
-    testimonio: "La fuimos a conocer “solo para ver” y volvimos con ella el sábado siguiente. Duerme al lado de la puerta esperando que alguien proponga ir a la playa.",
-    familia: "Familia Ferreyra, Ostende",
+    icon: MapPin,
+    titulo: "Venite al refugio",
+    texto: "Sin turno ni trámite previo: cualquier día de 10 a 16, golpeás la puerta y entrás.",
   },
   {
-    nombre: "Tuco", foto: fotoTuco, cuando: "adoptado en enero de 2026",
-    alt: "Retrato de Tuco, gato naranja de pelo largo, sentado y atento",
-    testimonio: "Vivo en un departamento chico y tenía miedo de que no le alcanzara el espacio. Se adueñó del sillón, de la ventana y de mí en dos días.",
-    familia: "Camila R., Pinamar centro",
+    icon: IdCard,
+    titulo: "Dejá tus datos y elegí",
+    texto: "Mostrás un documento, dejás un teléfono y firmás una planilla corta. Te contamos quién está para salir y elegís con quién pasar el día.",
   },
   {
-    nombre: "Bruno", foto: fotoBruno, cuando: "adoptado en noviembre de 2025",
-    alt: "Retrato de Bruno, perro mestizo grande de hocico canoso, recibiendo una caricia",
-    testimonio: "Tenía nueve años y nadie preguntaba por él. Hace un año que nos acompaña a caminar por el médano todas las mañanas.",
-    familia: "Jorge y Susana, Valeria del Mar",
+    icon: Clock,
+    titulo: "Traelo antes de que cierre",
+    texto: "Vuelven los dos antes de las 19. Te damos correa, agua y bolsitas; vos traés las ganas.",
   },
 ];
 
@@ -94,6 +91,7 @@ function Numero({ valor, etiqueta, cargando }) {
 export default function HomePage() {
   const [resumen, setResumen] = useState(null);
   const [destacados, setDestacados] = useState([]);
+  const [historias, setHistorias] = useState([]);
   const [cargando, setCargando] = useState(true);
   const [colaboracion, setColaboracion] = useState(null); // "voluntario" | "transito"
 
@@ -102,17 +100,19 @@ export default function HomePage() {
 
     const cargar = async () => {
       // allSettled: que falle el resumen no tiene por qué dejar la Home sin animales
-      const [r, c] = await Promise.allSettled([
+      const [r, c, h] = await Promise.allSettled([
         adopcionesService.getResumen({ redirectOn401: false }),
         candidatosService.getAll(
           { adoptado: "false", orden: "antiguos", page_size: 3 },
           { redirectOn401: false },
         ),
+        candidatosService.getResenasPublicas(3, { redirectOn401: false }),
       ]);
       if (cancelado) return;
 
       if (r.status === "fulfilled") setResumen(r.value);
       if (c.status === "fulfilled") setDestacados(c.value.resultados);
+      if (h.status === "fulfilled") setHistorias(h.value);
       setCargando(false);
     };
 
@@ -246,43 +246,175 @@ export default function HomePage() {
         </ol>
       </section>
 
-      {/* ── 5. Historias de adopción ───────────────────────────────────── */}
-      <section className="mt-20" aria-labelledby="historias-titulo">
-        <TituloSeccion
-          kicker="Finales felices"
-          titulo="Cómo les fue a los que ya se fueron"
-          bajada="Historias de ejemplo, escritas para mostrar cómo se verá esta sección con testimonios reales."
-        />
+      {/* ── 5. Un día afuera ───────────────────────────────────────────── */}
+      {/* La iniciativa nueva. Va antes de las historias porque es lo más
+          distinto que tiene el refugio para ofrecer y no requiere decidir nada:
+          es la puerta de entrada más barata que existe para alguien que duda. */}
+      <section id="un-dia-afuera" className="mt-20 scroll-mt-24" aria-labelledby="salida-titulo">
+        <div className="overflow-hidden rounded-blob border border-duna/30 bg-gradient-to-br from-arena via-espuma to-bruma/40 shadow-suave">
+          <div className="grid grid-cols-1 gap-10 p-6 sm:p-10 lg:grid-cols-[1.15fr_1fr] lg:gap-12">
 
-        <div className="grid grid-cols-1 gap-6 md:grid-cols-3">
-          {HISTORIAS.map((h) => (
-            <figure
-              key={h.nombre}
-              className="flex flex-col overflow-hidden rounded-card border border-bruma/60 bg-espuma shadow-suave"
-            >
-              <img
-                src={h.foto}
-                alt={h.alt}
-                loading="lazy"
-                decoding="async"
-                className="aspect-[4/3] w-full object-cover"
-              />
-              <blockquote className="flex flex-1 flex-col p-6">
-                <Quote className="size-6 shrink-0 text-duna" aria-hidden="true" />
-                <p className="mt-3 flex-1 text-sm leading-relaxed text-niebla-oscuro">{h.testimonio}</p>
-                <figcaption className="mt-5 border-t border-bruma pt-4">
-                  <span className="block font-display text-base font-bold text-mar">
-                    {h.nombre}, {h.cuando}
-                  </span>
-                  <span className="mt-0.5 block text-xs text-niebla-oscuro">{h.familia}</span>
-                </figcaption>
-              </blockquote>
-            </figure>
-          ))}
+            <div>
+              <span className="inline-flex items-center gap-1.5 rounded-full bg-atardecer/15 px-3 py-1 text-xs font-bold uppercase tracking-wide text-atardecer-oscuro">
+                <Sparkles className="size-3.5" aria-hidden="true" />
+                Arrancamos con esto
+              </span>
+
+              <h2 id="salida-titulo" className="mt-4 text-3xl font-bold text-mar sm:text-4xl">
+                Llevate a uno por el día
+              </h2>
+              <p className="mt-3 max-w-xl text-base leading-relaxed text-niebla-oscuro">
+                No hace falta adoptar para cambiarle el día a un animal del refugio. Venís, elegís
+                a uno y se van juntos: a la playa, al parque, a tomar algo o a tirarse en tu patio.
+                Lo traés antes de que cierre y listo.
+              </p>
+              <p className="mt-3 max-w-xl text-base leading-relaxed text-niebla-oscuro">
+                Para ellos, un día afuera es salir del ruido de las jaulas y volver a confiar en
+                alguien. Para nosotros, alguien que los vio andar sueltos cuenta mejor cómo son que
+                cualquier ficha. Y más de una adopción empezó justo así.
+              </p>
+
+              <ol className="mt-8 space-y-4">
+                {PASOS_SALIDA.map((paso, i) => (
+                  <li key={paso.titulo} className="flex gap-4">
+                    <span className="relative grid size-11 shrink-0 place-items-center rounded-full bg-espuma shadow-suave">
+                      <paso.icon className="size-5 text-mar" aria-hidden="true" />
+                      <span
+                        className="absolute -right-1 -top-1 grid size-5 place-items-center rounded-full bg-mar text-[10px] font-bold text-white"
+                        aria-hidden="true"
+                      >
+                        {i + 1}
+                      </span>
+                    </span>
+                    <div>
+                      <h3 className="font-display text-base font-bold text-mar">{paso.titulo}</h3>
+                      <p className="mt-1 text-sm leading-relaxed text-niebla-oscuro">{paso.texto}</p>
+                    </div>
+                  </li>
+                ))}
+              </ol>
+
+              <div className="mt-8 flex flex-wrap gap-3">
+                <Button as={Link} to="/candidatos?salida=true" variant="acento" size="lg" icon={Sun}>
+                  Ver quiénes pueden salir
+                </Button>
+                <Button
+                  as="a"
+                  href="mailto:hola@refugiodelmar.org?subject=Quiero%20sacar%20a%20pasear%20a%20uno"
+                  variant="secondary"
+                  size="lg"
+                >
+                  Tengo una duda
+                </Button>
+              </div>
+            </div>
+
+            {/* La letra chica, ahí donde alguien la busca antes de venir.
+                self-start: sin eso la grilla la estira hasta el alto de la
+                columna de al lado y queda un hueco abajo. */}
+            <aside className="self-start rounded-card border border-bruma/60 bg-espuma p-6 shadow-suave">
+              <h3 className="font-display text-lg font-bold text-mar">Lo que conviene saber</h3>
+              <dl className="mt-5 space-y-4 text-sm">
+                <div className="flex gap-3">
+                  <Clock className="mt-0.5 size-4 shrink-0 text-duna" aria-hidden="true" />
+                  <div>
+                    <dt className="font-bold text-mar">Horario</dt>
+                    <dd className="mt-0.5 leading-relaxed text-niebla-oscuro">
+                      Salen de 10 a 16 y vuelven antes de las 19. Todos los días.
+                    </dd>
+                  </div>
+                </div>
+                <div className="flex gap-3">
+                  <IdCard className="mt-0.5 size-4 shrink-0 text-duna" aria-hidden="true" />
+                  <div>
+                    <dt className="font-bold text-mar">Qué llevar</dt>
+                    <dd className="mt-0.5 leading-relaxed text-niebla-oscuro">
+                      Un documento y un teléfono donde encontrarte. Nada más: es gratis.
+                    </dd>
+                  </div>
+                </div>
+                <div className="flex gap-3">
+                  <MapPin className="mt-0.5 size-4 shrink-0 text-duna" aria-hidden="true" />
+                  <div>
+                    <dt className="font-bold text-mar">Dónde</dt>
+                    <dd className="mt-0.5 leading-relaxed text-niebla-oscuro">{DIRECCION}</dd>
+                  </div>
+                </div>
+                <div className="flex gap-3">
+                  <PawPrint className="mt-0.5 size-4 shrink-0 text-duna" aria-hidden="true" />
+                  <div>
+                    <dt className="font-bold text-mar">Quiénes salen</dt>
+                    <dd className="mt-0.5 leading-relaxed text-niebla-oscuro">
+                      Los que ya están cómodos con gente y con la correa. En su ficha lo dice; los
+                      que recién llegaron todavía no.
+                    </dd>
+                  </div>
+                </div>
+              </dl>
+
+              <p className="mt-6 rounded-2xl bg-arena/70 p-3 text-xs leading-relaxed text-niebla-oscuro">
+                Si en el día te das cuenta de que no querés devolverlo, avisanos: la adopción se
+                arranca ahí mismo.
+              </p>
+            </aside>
+          </div>
         </div>
       </section>
 
-      {/* ── 6. Cómo ayudar + CTA final ─────────────────────────────────── */}
+      {/* ── 6. Historias de las familias ─────────────────────────────── */}
+      {/* Salen de las reseñas que carga el refugio. Sin ninguna publicada, la
+          sección no se muestra: mejor eso que testimonios de mentira. */}
+      {historias.length > 0 && (
+        <section className="mt-20" aria-labelledby="historias-titulo">
+          <TituloSeccion
+            kicker="Finales felices"
+            titulo="Cómo les fue a los que ya se fueron"
+            bajada="Lo que nos cuentan las familias cuando pasa el tiempo. Nos mandan fotos y las publicamos acá."
+          />
+
+          <div className="grid grid-cols-1 gap-6 md:grid-cols-3">
+            {historias.map((h) => {
+              const foto = h.src || h.candidato_imagen;
+              return (
+                <figure
+                  key={h.id}
+                  className="flex flex-col overflow-hidden rounded-card border border-bruma/60 bg-espuma shadow-suave"
+                >
+                  {foto && (
+                    <img
+                      src={foto}
+                      alt={`${h.candidato_nombre} en su casa nueva`}
+                      loading="lazy"
+                      decoding="async"
+                      className="aspect-[4/3] w-full object-cover"
+                    />
+                  )}
+                  <blockquote className="flex flex-1 flex-col p-6">
+                    <Quote className="size-6 shrink-0 text-duna" aria-hidden="true" />
+                    <p className="mt-3 flex-1 text-sm leading-relaxed text-niebla-oscuro">
+                      {h.texto}
+                    </p>
+                    <figcaption className="mt-5 border-t border-bruma pt-4">
+                      <span className="block font-display text-base font-bold text-mar">
+                        {h.candidato_nombre}
+                      </span>
+                      <span className="mt-0.5 block text-xs text-niebla-oscuro">{h.autor}</span>
+                    </figcaption>
+                  </blockquote>
+                </figure>
+              );
+            })}
+          </div>
+
+          <div className="mt-8 text-center">
+            <Button as={Link} to="/adopciones" variant="ghost" icon={ArrowRight}>
+              Ver todas las adopciones
+            </Button>
+          </div>
+        </section>
+      )}
+
+      {/* ── 7. Cómo ayudar + CTA final ─────────────────────────────────── */}
       <section className="mt-20" aria-labelledby="ayudar-titulo">
         <TituloSeccion
           kicker="No solo adoptando"

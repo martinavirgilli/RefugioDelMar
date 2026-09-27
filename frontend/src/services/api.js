@@ -275,9 +275,27 @@ export const candidatosService = {
    * Toggle the adopted/available status of a candidate.
    * An adopted candidate is archived, not deleted. Requires admin privileges.
    */
-  toggleAdopcion: async (id) => {
-    const response = await apiRequest(`/api/candidatos/${id}/adoptar/`, { method: "PATCH" });
+  toggleAdopcion: async (id, datos = {}) => {
+    const response = await apiRequest(`/api/candidatos/${id}/adoptar/`, {
+      method: "PATCH",
+      body: JSON.stringify(datos),
+    });
     return handleResponse(response, "Error al actualizar el estado de adopción");
+  },
+
+  /**
+   * Update only the fields passed. Requires admin privileges.
+   *
+   * The inline editors of the admin view send one or two fields at a time, so
+   * PATCH is the right verb: a PUT would need the whole object and would wipe
+   * whatever the form does not carry.
+   */
+  patch: async (id, campos) => {
+    const response = await apiRequest(`/api/candidatos/${id}/`, {
+      method: "PATCH",
+      body: JSON.stringify(campos),
+    });
+    return handleResponse(response, "Error al guardar los cambios");
   },
 
   /**
@@ -310,6 +328,59 @@ export const candidatosService = {
   getActividad: async (id) => {
     const response = await apiRequest(`/api/candidatos/${id}/actividad/`, { method: "GET" });
     return handleResponse(response, "Error al cargar la actividad del candidato");
+  },
+
+  // ── Reseñas de adopción ───────────────────────────────────────────────────
+
+  /** Published reviews for the home page and /adopciones. Public. */
+  getResenasPublicas: async (limite = 6, options = {}) => {
+    const response = await apiRequest(`/api/candidatos/resenas/${queryString({ limite })}`, {
+      method: "GET",
+      ...options,
+    });
+    return handleResponse(response, "Error al cargar las reseñas");
+  },
+
+  /** Every review of one candidate, published or not. Admin only. */
+  getResenas: async (id) => {
+    const response = await apiRequest(`/api/candidatos/${id}/resenas/`, { method: "GET" });
+    return handleResponse(response, "Error al cargar las reseñas");
+  },
+
+  /**
+   * Write a review of an adopted animal. Admin only.
+   * Pass { url } to link a photo, or { archivo: File } to upload one.
+   */
+  agregarResena: async (id, { autor, texto, url, archivo }) => {
+    let body;
+    if (archivo) {
+      body = new FormData();
+      body.append("autor", autor);
+      body.append("texto", texto);
+      body.append("archivo", archivo);
+    } else {
+      body = JSON.stringify({ autor, texto, url: url || null });
+    }
+
+    const response = await apiRequest(`/api/candidatos/${id}/resenas/`, { method: "POST", body });
+    return handleResponse(response, "Error al guardar la reseña");
+  },
+
+  /** Edit a review, or publish and unpublish it. Admin only. */
+  editarResena: async (id, resenaId, campos) => {
+    const response = await apiRequest(`/api/candidatos/${id}/resenas/${resenaId}/`, {
+      method: "PATCH",
+      body: JSON.stringify(campos),
+    });
+    return handleResponse(response, "Error al actualizar la reseña");
+  },
+
+  /** Delete a review. Admin only. */
+  borrarResena: async (id, resenaId) => {
+    const response = await apiRequest(`/api/candidatos/${id}/resenas/${resenaId}/borrar/`, {
+      method: "DELETE",
+    });
+    return handleResponse(response, "Error al borrar la reseña");
   },
 };
 

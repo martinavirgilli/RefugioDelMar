@@ -12,11 +12,11 @@
 
 import { useEffect, useState } from "react";
 import { Link } from "react-router-dom";
-import { ArrowRight, Cat, Dog, Heart, PawPrint, Rabbit } from "lucide-react";
+import { ArrowRight, Cat, Dog, Heart, PawPrint, Quote, Rabbit } from "lucide-react";
 import Button from "../../components/Button";
 import { Cargando } from "../../components/Skeleton";
-import { adopcionesService } from "../../services/api";
-import { formatEdad } from "../../lib/format";
+import { adopcionesService, candidatosService } from "../../services/api";
+import { formatEtapa } from "../../lib/format";
 
 const ICONO_ESPECIE = { perro: Dog, gato: Cat, conejo: Rabbit };
 
@@ -63,6 +63,7 @@ function GraficoMeses({ meses }) {
 export default function AdopcionesResumen() {
   const [resumen, setResumen] = useState(null);
   const [historial, setHistorial] = useState([]);
+  const [resenas, setResenas] = useState([]);
   const [cargando, setCargando] = useState(true);
   const [error, setError] = useState("");
 
@@ -73,13 +74,17 @@ export default function AdopcionesResumen() {
       try {
         setCargando(true);
         setError("");
-        const [datosResumen, datosHistorial] = await Promise.all([
+        const [datosResumen, datosHistorial, datosResenas] = await Promise.all([
           adopcionesService.getResumen({ redirectOn401: false }),
           adopcionesService.getHistorial({ redirectOn401: false }),
+          // Si fallan las reseñas la página sigue teniendo sentido: es el único
+          // pedido de los tres que puede quedar vacío sin romper nada.
+          candidatosService.getResenasPublicas(6, { redirectOn401: false }).catch(() => []),
         ]);
         if (cancelado) return;
         setResumen(datosResumen);
         setHistorial(datosHistorial);
+        setResenas(datosResenas);
       } catch (err) {
         if (!cancelado) setError(err.message || "Error al cargar el resumen");
       } finally {
@@ -202,8 +207,50 @@ export default function AdopcionesResumen() {
                 )}
                 <div className="p-3">
                   <p className="truncate text-sm font-bold text-mar">{c.nombre}</p>
-                  <p className="mt-0.5 text-xs text-niebla-oscuro">{formatEdad(c.edad)}</p>
+                  <p className="mt-0.5 text-xs text-niebla-oscuro">{formatEtapa(c.etapa)}</p>
                 </div>
+              </li>
+            ))}
+          </ul>
+        </section>
+      )}
+
+      {/* ── Lo que cuentan las familias ── */}
+      {resenas.length > 0 && (
+        <section aria-labelledby="resenas-titulo">
+          <div className="mb-5">
+            <h2 id="resenas-titulo" className="font-display text-lg font-bold text-mar">
+              Lo que cuentan las familias
+            </h2>
+            <p className="mt-1 text-sm text-niebla-oscuro">
+              Les escribimos unos meses después para saber cómo van las cosas.
+            </p>
+          </div>
+
+          <ul className="grid grid-cols-1 gap-5 md:grid-cols-2">
+            {resenas.map((r) => (
+              <li key={r.id}>
+                <figure className="flex h-full gap-4 rounded-card border border-bruma/60 bg-espuma p-5 shadow-suave">
+                  {(r.src || r.candidato_imagen) && (
+                    <img
+                      src={r.src || r.candidato_imagen}
+                      alt={`${r.candidato_nombre} en su casa nueva`}
+                      loading="lazy"
+                      decoding="async"
+                      className="size-24 shrink-0 rounded-2xl object-cover"
+                    />
+                  )}
+                  <blockquote className="flex min-w-0 flex-col">
+                    <Quote className="size-5 shrink-0 text-duna" aria-hidden="true" />
+                    <p className="mt-2 flex-1 text-sm leading-relaxed text-niebla-oscuro">
+                      {r.texto}
+                    </p>
+                    <figcaption className="mt-3 text-xs">
+                      <span className="font-bold text-mar">{r.candidato_nombre}</span>
+                      <span className="text-niebla-oscuro"> · {r.autor}</span>
+                    </figcaption>
+                  </blockquote>
+                </figure>
               </li>
             ))}
           </ul>

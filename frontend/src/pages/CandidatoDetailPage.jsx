@@ -1,26 +1,33 @@
 /**
  * CandidatoDetailPage — la ficha de un animal.
  *
- * Es pública. A la izquierda la galería, a la derecha los datos y el CTA:
- * desde acá se puede pedir la visita sin volver al catálogo a buscarlo.
+ * Es pública mientras el animal busca casa: a la izquierda la galería, a la
+ * derecha los datos y el CTA, así se puede pedir la visita sin volver al
+ * catálogo a buscarlo.
  *
- * Si además sos del refugio, abajo aparece la ficha interna con todo lo que
- * pasó alrededor de este animal: quién pidió conocerlo y qué visitas hay.
+ * Cuando ya fue adoptado, la ficha queda archivada y solo la abre el refugio:
+ * el backend responde 404 a cualquier otro. Lo que sigue siendo público de esa
+ * adopción son los números de /adopciones y la reseña que mandó la familia.
+ *
+ * Para el refugio, abajo aparecen dos bloques más: el editor de la ficha y la
+ * actividad (quién pidió conocerlo, qué visitas hay).
  */
 
 import { useCallback, useEffect, useState } from "react";
 import { Link, useNavigate, useParams } from "react-router-dom";
-import { ArrowLeft, CalendarDays, Heart, Share2 } from "lucide-react";
+import { Archive, ArrowLeft, CalendarDays, Heart, PawPrint, Share2, Sun } from "lucide-react";
 import Layout from "../components/Layout";
 import Button from "../components/Button";
 import Badge from "../components/Badge";
+import EmptyState from "../components/EmptyState";
 import FichaAdmin from "../components/FichaAdmin";
+import FichaEditor from "../components/FichaEditor";
 import Galeria from "../components/Galeria";
 import SolicitudVisitaModal from "../components/SolicitudVisitaModal";
 import { Cargando } from "../components/Skeleton";
 import { useAuth } from "../context/AuthContext";
 import { candidatosService } from "../services/api";
-import { formatEdad, sufijoGenero } from "../lib/format";
+import { formatEtapa, formatFecha, sufijoGenero } from "../lib/format";
 
 export default function CandidatoDetailPage() {
   const { id } = useParams();
@@ -72,15 +79,21 @@ export default function CandidatoDetailPage() {
     return <Layout><Cargando texto="Buscando su ficha…" /></Layout>;
   }
 
+  // El backend responde 404 tanto si la ficha no existe como si está archivada
+  // por adopción. Desde afuera es lo mismo: no hay nada que ver acá. Por eso el
+  // mensaje explica las dos cosas en vez de repetir el "No encontrado." del API.
   if (error || !candidato) {
     return (
       <Layout>
         <Button as={Link} to="/candidatos" variant="secondary" size="sm" icon={ArrowLeft} className="mb-5">
           Volver al catálogo
         </Button>
-        <div role="alert" className="rounded-2xl border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-800">
-          {error || "No encontramos a este candidato."}
-        </div>
+        <EmptyState
+          icon={PawPrint}
+          title="No encontramos esta ficha"
+          description="Puede que este animal ya haya encontrado casa: cuando eso pasa, archivamos su ficha. Mirá quiénes siguen esperando."
+          action={<Button as={Link} to="/candidatos">Ver el catálogo</Button>}
+        />
       </Layout>
     );
   }
@@ -91,10 +104,10 @@ export default function CandidatoDetailPage() {
     ...(candidato.fotos ?? []),
   ];
 
-  // `capitalize` solo donde el valor viene en minúscula desde la base; la edad
-  // ya viene redactada y con capitalize quedaba "2 Años".
+  // `capitalize` solo donde el valor viene en minúscula desde la base; la
+  // etapa ya viene con mayúscula desde el helper.
   const datos = [
-    { etiqueta: "Edad", valor: formatEdad(candidato.edad), capitalizar: false },
+    { etiqueta: "Etapa", valor: formatEtapa(candidato.etapa), capitalizar: false },
     { etiqueta: "Especie", valor: candidato.especie, capitalizar: true },
     {
       etiqueta: "Sexo",
@@ -145,14 +158,15 @@ export default function CandidatoDetailPage() {
           <div className="mt-8 flex flex-wrap gap-3">
             {candidato.adoptado ? (
               <div className="rounded-2xl bg-pino/10 px-5 py-4">
-                <p className="text-sm font-bold text-pino">
-                  {candidato.nombre} ya encontró su casa.
+                <p className="flex items-center gap-2 text-sm font-bold text-pino">
+                  <Archive className="size-4 shrink-0" aria-hidden="true" />
+                  Ficha archivada
                 </p>
                 <p className="mt-1 text-sm text-niebla-oscuro">
-                  Guardamos su ficha como recuerdo.{" "}
-                  <Link to="/candidatos" className="font-bold text-atardecer-oscuro underline underline-offset-2">
-                    Mirá quiénes siguen esperando
-                  </Link>.
+                  {candidato.nombre} ya encontró su casa
+                  {candidato.fecha_adopcion && <> el {formatFecha(candidato.fecha_adopcion)}</>}
+                  {candidato.adoptante && <>, con {candidato.adoptante}</>}.
+                  Fuera del refugio, esta ficha no se ve.
                 </p>
               </div>
             ) : (
@@ -166,6 +180,19 @@ export default function CandidatoDetailPage() {
             </Button>
           </div>
 
+          {!candidato.adoptado && candidato.apto_salida && (
+            <p className="mt-4 flex items-start gap-2 rounded-2xl bg-atardecer/10 p-3 text-sm leading-relaxed text-mar">
+              <Sun className="mt-0.5 size-4 shrink-0 text-atardecer-oscuro" aria-hidden="true" />
+              <span>
+                <strong>También puede salir por el día.</strong> Podés venir al refugio,
+                dejar tus datos y llevar{sufijoGenero(candidato.genero)} a pasear unas horas.{" "}
+                <a href="/#un-dia-afuera" className="font-bold text-atardecer-oscuro underline underline-offset-2">
+                  Cómo funciona
+                </a>.
+              </span>
+            </p>
+          )}
+
           {!candidato.adoptado && !isAuthenticated() && (
             <p className="mt-3 text-xs text-niebla-oscuro">
               Para coordinar una visita te vamos a pedir una cuenta. Se hace en un minuto.
@@ -178,7 +205,16 @@ export default function CandidatoDetailPage() {
         </div>
       </article>
 
-      {isAdmin() && <FichaAdmin candidatoId={candidato.id} onCambio={cargar} />}
+      {isAdmin() && (
+        <>
+          <FichaEditor
+            candidato={candidato}
+            onCambio={cargar}
+            onBorrado={() => navigate("/candidatos")}
+          />
+          <FichaAdmin candidatoId={candidato.id} onCambio={cargar} />
+        </>
+      )}
 
       {modalAbierto && (
         <SolicitudVisitaModal
@@ -186,7 +222,7 @@ export default function CandidatoDetailPage() {
           onClose={() => setModalAbierto(false)}
           onSuccess={() => {
             setModalAbierto(false);
-            setAviso("Recibimos tu pedido. En breve un voluntario se pone en contacto.");
+            setAviso("Recibimos tu pedido. En breve un voluntario se pondrá en contacto.");
           }}
         />
       )}
