@@ -3,14 +3,17 @@
  *
  * Variantes:
  *   catalogo   — la del listado: acciones de admin (adoptar / eliminar) o
- *                "Quiero conocerlo/a" para un usuario común.
+ *                "Quiero conocerlo/a" para quien está mirando.
  *   destacado  — la de la Home: solo la foto, el nombre y un link al detalle.
  *
- * La imagen conserva su alto natural para no recortar caras de animales; por
- * eso el catálogo la acomoda en columnas tipo masonry.
+ * La foto va recortada a 4:3 para que todas las tarjetas de una fila midan lo
+ * mismo y los botones queden alineados.
+ *
+ * El catálogo es público, así que la tarjeta la ve gente sin cuenta: en ese
+ * caso "Quiero conocerlo" lleva al login y vuelve acá después.
  */
 
-import { Link } from "react-router-dom";
+import { Link, useLocation } from "react-router-dom";
 import { Heart, PawPrint, Trash2, Undo2 } from "lucide-react";
 import Button from "./Button";
 import Badge from "./Badge";
@@ -18,9 +21,13 @@ import { useAuth } from "../context/AuthContext";
 import { formatEdad, sufijoGenero } from "../lib/format";
 
 export default function Card({ candidato, onToggle, onDelete, onSolicitar, variant = "catalogo" }) {
-  const { isAdmin } = useAuth();
+  const { isAdmin, isAuthenticated } = useAuth();
+  const location = useLocation();
   const admin = isAdmin();
   const esDestacado = variant === "destacado";
+
+  /** El texto concuerda con el género del animal: conocerlo / conocerla. */
+  const textoCta = `Quiero conocer${sufijoGenero(candidato.genero)}`;
 
   return (
     <article className="group flex flex-col overflow-hidden rounded-card border border-bruma/60 bg-espuma shadow-suave transition-shadow duration-300 hover:shadow-elevada">
@@ -33,14 +40,11 @@ export default function Card({ candidato, onToggle, onDelete, onSolicitar, varia
             alt={`${candidato.nombre}, ${candidato.especie.toLowerCase()} en adopción`}
             loading="lazy"
             decoding="async"
-            // En el catálogo la foto conserva su alto natural (grilla masonry);
-            // en los destacados va recortada, si no las tres tarjetas quedan
-            // de distinto alto y los botones no alinean.
-            className={esDestacado ? "block aspect-[4/3] w-full object-cover" : "block h-auto w-full"}
-            onError={(e) => { e.currentTarget.style.display = "none"; }}
+            className="block aspect-[4/3] w-full object-cover"
+            onError={(e) => { e.currentTarget.style.visibility = "hidden"; }}
           />
         ) : (
-          <div className={`flex items-center justify-center ${esDestacado ? "aspect-[4/3]" : "h-52"}`}>
+          <div className="flex aspect-[4/3] items-center justify-center">
             <PawPrint className="size-12 text-niebla/40" aria-hidden="true" />
           </div>
         )}
@@ -51,14 +55,26 @@ export default function Card({ candidato, onToggle, onDelete, onSolicitar, varia
         />
 
         {candidato.adoptado && (
-          <Badge text="Adoptado" variant="adoptado" icon={Heart} className="absolute right-3 top-3 bg-espuma/90 backdrop-blur-sm" />
+          <Badge
+            text="Adoptado"
+            variant="adoptado"
+            icon={Heart}
+            className="absolute right-3 top-3 bg-espuma/90 backdrop-blur-sm"
+          />
         )}
       </div>
 
       {/* ── Cuerpo ── */}
       <div className="flex flex-1 flex-col gap-2 p-5">
         <div>
-          <h3 className="text-lg font-bold text-mar">{candidato.nombre}</h3>
+          <h3 className="text-lg font-bold text-mar">
+            <Link
+              to={`/candidatos/${candidato.id}`}
+              className="rounded transition-colors hover:text-mar-claro focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-mar-claro focus-visible:ring-offset-2 focus-visible:ring-offset-espuma"
+            >
+              {candidato.nombre}
+            </Link>
+          </h3>
           <p className="mt-0.5 text-xs text-niebla-oscuro">
             {formatEdad(candidato.edad)}
             {candidato.genero && candidato.genero !== "desconocido" && (
@@ -110,9 +126,22 @@ export default function Card({ candidato, onToggle, onDelete, onSolicitar, varia
               </>
             ) : (
               !candidato.adoptado && (
-                <Button variant="acento" size="sm" className="flex-1" onClick={() => onSolicitar?.(candidato)}>
-                  Quiero conocer{sufijoGenero(candidato.genero)}
-                </Button>
+                isAuthenticated() ? (
+                  <Button variant="acento" size="sm" className="flex-1" onClick={() => onSolicitar?.(candidato)}>
+                    {textoCta}
+                  </Button>
+                ) : (
+                  <Button
+                    as={Link}
+                    to="/login"
+                    state={{ from: location, candidato: candidato.id }}
+                    variant="acento"
+                    size="sm"
+                    className="flex-1"
+                  >
+                    {textoCta}
+                  </Button>
+                )
               )
             )}
           </div>

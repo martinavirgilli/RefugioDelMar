@@ -60,7 +60,8 @@ export default function SolicitudVisitaModal({ candidato, onClose, onSuccess }) 
           <h2 className="text-xl font-bold text-mar mb-1">Solicitar visita</h2>
           <p className="text-sm text-niebla-oscuro mb-5">
             Querés conocer a <strong className="text-mar">{candidato.nombre}</strong>.
-            Completá el formulario y el equipo del refugio se pondrá en contacto.
+            Dejanos tus datos y <strong className="text-mar">en breve un voluntario se pone en
+            contacto</strong> para coordinar el día y la hora.
           </p>
 
           <form onSubmit={handleSubmit} className="space-y-4">

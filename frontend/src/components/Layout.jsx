@@ -5,9 +5,9 @@
  * móvil tipo drawer y footer en mar separado por una ola.
  *
  * Los links visibles dependen de la sesión:
- *   sin sesión        → Inicio, Candidatos, Iniciar sesión
- *   usuario común     → + Mis solicitudes, Adopciones
- *   admin             → + Nuevo candidato, Visitas, Nueva visita
+ *   cualquiera        → Inicio, Candidatos, Adopciones (el catálogo es público)
+ *   usuario común     → + Mis solicitudes
+ *   admin             → + Visitas, Quieren ayudar, Nuevo candidato
  * Esconder un link no es seguridad: cada acción de admin se valida en el backend.
  */
 
@@ -84,15 +84,15 @@ export default function Layout({ children }) {
   const links = [
     { to: "/", label: "Inicio" },
     { to: "/candidatos", label: "Candidatos" },
-    ...(authed && admin
+    { to: "/adopciones", label: "Adopciones" },
+    ...(admin
       ? [
-          { to: "/nuevo", label: "Nuevo candidato" },
           { to: "/visitas", label: "Visitas" },
-          { to: "/nueva-visita", label: "Nueva visita" },
+          { to: "/colaboraciones", label: "Quieren ayudar" },
+          { to: "/nuevo", label: "Nuevo candidato" },
         ]
       : []),
     ...(authed && !admin ? [{ to: "/mis-solicitudes", label: "Mis solicitudes" }] : []),
-    ...(authed ? [{ to: "/adopciones", label: "Adopciones" }] : []),
   ];
 
   return (

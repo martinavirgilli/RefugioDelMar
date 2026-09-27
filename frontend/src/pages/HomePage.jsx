@@ -4,23 +4,21 @@
  * Seis secciones: hero, impacto, candidatos destacados, cómo adoptar,
  * historias y cómo ayudar.
  *
- * Sobre los datos: el catálogo y el resumen todavía exigen sesión (se abren al
- * público en la Fase 2). Mientras tanto, si hay sesión la Home muestra los
- * números y los animales reales; si no, muestra contenido de ejemplo y lo dice,
- * para no hacer pasar datos inventados por reales.
+ * Los datos son siempre reales: el catálogo y el resumen ya son públicos, así
+ * que no hace falta contenido de ejemplo ni degradar nada sin sesión.
  */
 
 import { useEffect, useState } from "react";
 import { Link } from "react-router-dom";
 import {
   ArrowRight, CalendarHeart, Gift, Handshake, Heart, HeartHandshake,
-  Home, PawPrint, Quote, Search, Sparkles,
+  House, MapPin, PawPrint, Quote, Search, Sparkles,
 } from "lucide-react";
 import Layout from "../components/Layout";
 import Button from "../components/Button";
 import Card from "../components/Card";
+import ColaboracionModal from "../components/ColaboracionModal";
 import Skeleton, { SkeletonCard } from "../components/Skeleton";
-import { useAuth } from "../context/AuthContext";
 import { adopcionesService, candidatosService } from "../services/api";
 
 import portada640 from "../assets/images/portada-640.webp";
@@ -29,37 +27,20 @@ import portada1600 from "../assets/images/portada-1600.webp";
 import fotoMalena from "../assets/images/candidato5.jpg";
 import fotoTuco from "../assets/images/candidato7.jpg";
 import fotoBruno from "../assets/images/candidato3.jpg";
-import fotoLola from "../assets/images/candidato4.jpg";
-import fotoRocco from "../assets/images/candidato1.jpg";
-import fotoNina from "../assets/images/candidato2.jpg";
 
-// ── Contenido ficticio de ejemplo ─────────────────────────────────────────
+// ── Contenido de la página ────────────────────────────────────────────────
 
-const RESUMEN_EJEMPLO = { adoptados: 128, disponibles: 14, total: 142 };
+/** Dirección del refugio, ficticia como todo el resto de los datos. */
+const DIRECCION = "Av. de los Pinos 1450, Pinamar";
 
-const DESTACADOS_EJEMPLO = [
-  {
-    id: "ejemplo-lola", nombre: "Lola", especie: "perro", genero: "hembra", edad: 2,
-    imagen: fotoLola, adoptado: false,
-    descripcion: "Llegó flaquita y desconfiada, y hoy saluda a todo el mundo parada en la reja. Le encanta correr en la arena.",
-  },
-  {
-    id: "ejemplo-rocco", nombre: "Rocco", especie: "perro", genero: "macho", edad: 6,
-    imagen: fotoRocco, adoptado: false,
-    descripcion: "Grandote y tranquilo. Camina al lado tuyo sin tirar de la correa y se duerme apenas encuentra una sombra.",
-  },
-  {
-    id: "ejemplo-nina", nombre: "Nina", especie: "perro", genero: "hembra", edad: 3,
-    imagen: fotoNina, adoptado: false,
-    descripcion: "Curiosa y sociable. Se lleva bien con otros perros y con chicos; busca una casa con patio para seguir explorando.",
-  },
-];
+/** Link de donación de mentira: no hay una cuenta real detrás. */
+const LINK_DONACION = "https://link.mercadopago.com.ar/refugiodelmar-demo";
 
 const PASOS = [
   { icon: Search, titulo: "Conocelos", texto: "Mirá el catálogo y leé la historia de cada animal. Fijate con cuál te pasa algo." },
   { icon: CalendarHeart, titulo: "Pedí una visita", texto: "Contanos por qué querés conocerlo y cómo es tu casa. Es un formulario corto." },
   { icon: Handshake, titulo: "Vení a encontrarlo", texto: "Coordinamos día y hora en el refugio. Sin apuro: la idea es que se conozcan de verdad." },
-  { icon: Home, titulo: "Llevalo a casa", texto: "Si los dos están cómodos, se va con vos castrado, vacunado y con seguimiento nuestro." },
+  { icon: House, titulo: "Llevalo a casa", texto: "Si los dos están cómodos, se va con vos castrado, vacunado y con seguimiento nuestro." },
 ];
 
 const HISTORIAS = [
@@ -111,42 +92,35 @@ function Numero({ valor, etiqueta, cargando }) {
 }
 
 export default function HomePage() {
-  const { isAuthenticated } = useAuth();
-  const conSesion = isAuthenticated();
-
   const [resumen, setResumen] = useState(null);
   const [destacados, setDestacados] = useState([]);
-  const [cargando, setCargando] = useState(conSesion);
+  const [cargando, setCargando] = useState(true);
+  const [colaboracion, setColaboracion] = useState(null); // "voluntario" | "transito"
 
-  // Los datos reales solo existen con sesión. Sin sesión ni siquiera pedimos:
-  // ahorramos un 401 y mostramos el contenido de ejemplo directamente.
   useEffect(() => {
-    if (!conSesion) return;
     let cancelado = false;
 
     const cargar = async () => {
+      // allSettled: que falle el resumen no tiene por qué dejar la Home sin animales
       const [r, c] = await Promise.allSettled([
         adopcionesService.getResumen({ redirectOn401: false }),
-        candidatosService.getAll({ redirectOn401: false }),
+        candidatosService.getAll(
+          { adoptado: "false", orden: "antiguos", page_size: 3 },
+          { redirectOn401: false },
+        ),
       ]);
       if (cancelado) return;
 
       if (r.status === "fulfilled") setResumen(r.value);
-      if (c.status === "fulfilled" && Array.isArray(c.value)) {
-        setDestacados(c.value.filter((x) => !x.adoptado).slice(0, 3));
-      }
+      if (c.status === "fulfilled") setDestacados(c.value.resultados);
       setCargando(false);
     };
 
     cargar();
     return () => { cancelado = true; };
-  }, [conSesion]);
+  }, []);
 
-  // Si la API falló o no hay sesión, el ejemplo salva la página sin mentir.
-  const datos = resumen ?? RESUMEN_EJEMPLO;
-  const tarjetas = destacados.length > 0 ? destacados : DESTACADOS_EJEMPLO;
-  const sonEjemplo = resumen === null;
-  const tarjetasEjemplo = destacados.length === 0;
+  const datos = resumen ?? { adoptados: 0, disponibles: 0, total: 0 };
 
   return (
     <Layout>
@@ -212,15 +186,6 @@ export default function HomePage() {
             <Numero valor={datos.total} etiqueta="pasaron por el refugio" cargando={cargando} />
           </div>
 
-          {sonEjemplo && !cargando && (
-            <p className="mt-8 text-center text-xs text-niebla-oscuro">
-              Números de ejemplo.{" "}
-              <Link to="/login" className="font-bold text-atardecer-oscuro underline underline-offset-2">
-                Iniciá sesión
-              </Link>{" "}
-              para ver los datos reales del refugio.
-            </p>
-          )}
         </div>
       </section>
 
@@ -228,47 +193,23 @@ export default function HomePage() {
       <section className="mt-20" aria-labelledby="destacados-titulo" aria-busy={cargando}>
         <TituloSeccion
           kicker="Buscan casa"
-          titulo="Conocé a algunos de ellos"
+          titulo="Los que más tiempo llevan esperando"
           bajada="Cada uno llegó de una manera distinta. Todos están castrados, vacunados y listos para irse."
         />
 
         <div className="grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-3">
           {cargando
             ? [0, 1, 2].map((i) => <SkeletonCard key={i} />)
-            : tarjetas.map((c) =>
-                tarjetasEjemplo ? (
-                  // Las de ejemplo no linkean a un detalle que no existe
-                  <article
-                    key={c.id}
-                    className="flex flex-col overflow-hidden rounded-card border border-bruma/60 bg-espuma shadow-suave"
-                  >
-                    <img
-                      src={c.imagen}
-                      alt={`${c.nombre}, ${c.especie} en adopción`}
-                      loading="lazy"
-                      decoding="async"
-                      className="aspect-[4/3] w-full object-cover"
-                    />
-                    <div className="flex flex-1 flex-col gap-2 p-5">
-                      <h3 className="text-lg font-bold text-mar">{c.nombre}</h3>
-                      <p className="text-xs text-niebla-oscuro">
-                        {c.edad} años · <span className="capitalize">{c.genero}</span>
-                      </p>
-                      <p className="flex-1 text-sm leading-relaxed text-niebla-oscuro">{c.descripcion}</p>
-                    </div>
-                  </article>
-                ) : (
-                  <Card key={c.id} candidato={c} variant="destacado" />
-                )
-              )}
+            : destacados.map((c) => <Card key={c.id} candidato={c} variant="destacado" />)}
         </div>
 
+        {!cargando && destacados.length === 0 && (
+          <p className="rounded-card border border-bruma/60 bg-espuma px-6 py-10 text-center text-sm text-niebla-oscuro">
+            Ahora mismo no hay animales esperando casa. Volvé pronto.
+          </p>
+        )}
+
         <div className="mt-10 text-center">
-          {tarjetasEjemplo && !cargando && (
-            <p className="mb-4 text-xs text-niebla-oscuro">
-              Animales de ejemplo. El catálogo completo pide iniciar sesión.
-            </p>
-          )}
           <Button as={Link} to="/candidatos" variant="secondary" icon={ArrowRight}>
             Ver todos los candidatos
           </Button>
@@ -350,19 +291,76 @@ export default function HomePage() {
         />
 
         <div className="grid grid-cols-1 gap-6 sm:grid-cols-3">
-          {[
-            { icon: HeartHandshake, titulo: "Hacete voluntario", texto: "Paseos, baños, fotos para las fichas o una mano los sábados a la mañana. Toda ayuda suma." },
-            { icon: Gift, titulo: "Doná lo que puedas", texto: "Alimento, mantas, antiparasitarios o un aporte mensual para los gastos del veterinario." },
-            { icon: Sparkles, titulo: "Sé hogar de tránsito", texto: "Un lugar temporal mientras un animal se recupera hace toda la diferencia en cómo llega a su adopción." },
-          ].map((item) => (
-            <div key={item.titulo} className="rounded-card border border-bruma/60 bg-espuma p-6 shadow-suave">
-              <span className="grid size-12 place-items-center rounded-full bg-bruma/50">
-                <item.icon className="size-6 text-mar" aria-hidden="true" />
+
+          <div className="flex flex-col rounded-card border border-bruma/60 bg-espuma p-6 shadow-suave">
+            <span className="grid size-12 place-items-center rounded-full bg-bruma/50">
+              <HeartHandshake className="size-6 text-mar" aria-hidden="true" />
+            </span>
+            <h3 className="mt-4 text-lg font-bold text-mar">Hacete voluntario</h3>
+            <p className="mt-2 flex-1 text-sm leading-relaxed text-niebla-oscuro">
+              Paseos, baños, fotos para las fichas o una mano los sábados a la mañana.
+              Toda ayuda suma.
+            </p>
+            <Button
+              variant="secondary"
+              size="sm"
+              className="mt-5 self-start"
+              onClick={() => setColaboracion("voluntario")}
+            >
+              Quiero anotarme
+            </Button>
+          </div>
+
+          <div className="flex flex-col rounded-card border border-bruma/60 bg-espuma p-6 shadow-suave">
+            <span className="grid size-12 place-items-center rounded-full bg-bruma/50">
+              <Gift className="size-6 text-mar" aria-hidden="true" />
+            </span>
+            <h3 className="mt-4 text-lg font-bold text-mar">Doná lo que puedas</h3>
+            <p className="mt-2 text-sm leading-relaxed text-niebla-oscuro">
+              Un aporte para el veterinario, o alimento, mantas y antiparasitarios que podés
+              acercar vos mismo.
+            </p>
+            <p className="mt-4 flex items-start gap-2 rounded-2xl bg-arena/70 p-3 text-xs leading-relaxed text-niebla-oscuro">
+              <MapPin className="mt-0.5 size-4 shrink-0 text-duna" aria-hidden="true" />
+              <span>
+                Dejá lo que quieras donar en <strong className="text-mar">{DIRECCION}</strong>,
+                de lunes a viernes de 10 a 17 h.
               </span>
-              <h3 className="mt-4 text-lg font-bold text-mar">{item.titulo}</h3>
-              <p className="mt-2 text-sm leading-relaxed text-niebla-oscuro">{item.texto}</p>
-            </div>
-          ))}
+            </p>
+            <Button
+              as="a"
+              href={LINK_DONACION}
+              target="_blank"
+              rel="noopener noreferrer"
+              variant="acento"
+              size="sm"
+              className="mt-4 self-start"
+            >
+              Donar por Mercado Pago
+            </Button>
+            <p className="mt-2 text-xs text-niebla-oscuro">
+              Link de demostración: no cobra nada de verdad.
+            </p>
+          </div>
+
+          <div className="flex flex-col rounded-card border border-bruma/60 bg-espuma p-6 shadow-suave">
+            <span className="grid size-12 place-items-center rounded-full bg-bruma/50">
+              <Sparkles className="size-6 text-mar" aria-hidden="true" />
+            </span>
+            <h3 className="mt-4 text-lg font-bold text-mar">Sé hogar de tránsito</h3>
+            <p className="mt-2 flex-1 text-sm leading-relaxed text-niebla-oscuro">
+              Un lugar temporal mientras un animal se recupera cambia por completo cómo llega a
+              su adopción. El alimento y la veterinaria los ponemos nosotros.
+            </p>
+            <Button
+              variant="secondary"
+              size="sm"
+              className="mt-5 self-start"
+              onClick={() => setColaboracion("transito")}
+            >
+              Ofrecer mi casa
+            </Button>
+          </div>
         </div>
 
         <div className="mt-12 overflow-hidden rounded-blob bg-mar px-6 py-14 text-center text-white shadow-elevada">
@@ -389,6 +387,10 @@ export default function HomePage() {
           </div>
         </div>
       </section>
+
+      {colaboracion && (
+        <ColaboracionModal tipo={colaboracion} onClose={() => setColaboracion(null)} />
+      )}
     </Layout>
   );
 }

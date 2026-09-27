@@ -16,10 +16,13 @@ import { Cargando } from "../components/Skeleton";
 import { solicitudesService } from "../services/api";
 import { formatFechaHora } from "../lib/format";
 
+// Lo que ve quien pidió la visita. El backend distingue "rechazada", pero acá
+// no se habla de rechazo: se dice que no pudimos coordinar y se ofrece otra
+// puerta, que es más honesto sobre por qué suele pasar y menos frío.
 const estadoInfo = {
-  revision:  { label: "En revisión" },
-  aceptada:  { label: "Aceptada" },
-  rechazada: { label: "Rechazada" },
+  revision:  { label: "Recibida" },
+  aceptada:  { label: "Visita confirmada" },
+  rechazada: { label: "Sin coordinar" },
 };
 
 export default function MisSolicitudesPage() {
@@ -115,7 +118,10 @@ export default function MisSolicitudesPage() {
                   {s.estado === "rechazada" && (
                     <div className="mb-3 rounded-2xl border border-red-200 bg-red-50 px-4 py-2.5">
                       <p className="text-sm text-red-800">
-                        Tu solicitud fue rechazada. Podés intentar con otro candidato.
+                        Esta vez no pudimos coordinar la visita.{" "}
+                        <Link to="/candidatos" className="font-bold underline underline-offset-2">
+                          Mirá quiénes más están esperando
+                        </Link>.
                       </p>
                     </div>
                   )}
@@ -124,7 +130,7 @@ export default function MisSolicitudesPage() {
                   {s.estado === "revision" && (
                     <div className="mb-3 rounded-2xl bg-duna/15 px-4 py-2.5">
                       <p className="text-sm text-mar">
-                        Tu solicitud está siendo revisada por el equipo del refugio.
+                        En breve un voluntario se pone en contacto para coordinar la visita.
                       </p>
                     </div>
                   )}

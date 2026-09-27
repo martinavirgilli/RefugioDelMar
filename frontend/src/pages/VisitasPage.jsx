@@ -1,167 +1,169 @@
 /**
- * VisitasPage — admin view for managing all visit activity.
+ * VisitasPage — el tablero de visitas del refugio. Solo admin.
  *
- * Sections:
- *   1. Visit requests (SolicitudVisita) — pending ones show accept/reject actions.
- *   2. Manually scheduled visits (Visita model) — classic VisitaCard view.
- *   3. "Programar visita manualmente" link at the bottom.
+ * Tres bloques: lo que espera respuesta, lo que está agendado y lo que ya se
+ * resolvió. El alta manual vive acá adentro: el botón despliega el formulario
+ * en la misma página y la visita nueva entra en la lista sin recargar, en vez
+ * de mandar a otra pantalla y volver.
  */
 
-import { useState, useEffect } from "react";
-import { Link } from "react-router-dom";
+import { useCallback, useEffect, useState } from "react";
+import { CalendarPlus, Inbox } from "lucide-react";
 import Layout from "../components/Layout";
-import VisitaCard from "../components/VisitaCard";
-import SolicitudAdminCard from "../components/SolicitudAdminCard";
-import { Plus } from "lucide-react";
-import Button from "../components/Button";
 import Badge from "../components/Badge";
+import Button from "../components/Button";
+import EmptyState from "../components/EmptyState";
+import NuevaVisitaForm from "../components/NuevaVisitaForm";
+import SolicitudAdminCard from "../components/SolicitudAdminCard";
+import VisitaCard from "../components/VisitaCard";
 import { Cargando } from "../components/Skeleton";
-import { visitasService, solicitudesService } from "../services/api";
+import { solicitudesService, visitasService } from "../services/api";
+
+function Seccion({ titulo, descripcion, cantidad, children }) {
+  return (
+    <section className="mb-12">
+      <div className="mb-4 flex flex-wrap items-center gap-3">
+        <h2 className="font-display text-xl font-bold text-mar">{titulo}</h2>
+        {cantidad > 0 && <Badge text={String(cantidad)} variant="revision" />}
+      </div>
+      {descripcion && <p className="-mt-2 mb-4 text-sm text-niebla-oscuro">{descripcion}</p>}
+      {children}
+    </section>
+  );
+}
 
 export default function VisitasPage() {
   const [visitas, setVisitas] = useState([]);
   const [solicitudes, setSolicitudes] = useState([]);
-  const [loading, setLoading] = useState(true);
+  const [cargando, setCargando] = useState(true);
   const [error, setError] = useState("");
+  const [formAbierto, setFormAbierto] = useState(false);
+  const [aviso, setAviso] = useState("");
 
-  useEffect(() => {
-    loadAll();
-  }, []);
-
-  const loadAll = async () => {
+  const cargar = useCallback(async () => {
     try {
-      setLoading(true);
+      setCargando(true);
       setError("");
-      const [visitasData, solicitudesData] = await Promise.all([
+      const [datosVisitas, datosSolicitudes] = await Promise.all([
         visitasService.getAll(),
         solicitudesService.getAll(),
       ]);
-      setVisitas(Array.isArray(visitasData) ? visitasData : []);
-      setSolicitudes(Array.isArray(solicitudesData) ? solicitudesData : []);
+      setVisitas(Array.isArray(datosVisitas) ? datosVisitas : []);
+      setSolicitudes(Array.isArray(datosSolicitudes) ? datosSolicitudes : []);
     } catch (err) {
-      if (err.message?.includes("404")) {
-        setSolicitudes([]);
-      } else {
-        setError(err.message || "Error al cargar los datos");
-      }
+      setError(err.message || "Error al cargar los datos");
     } finally {
-      setLoading(false);
+      setCargando(false);
     }
-  };
+  }, []);
 
-  const handleDeleteVisita = async (id) => {
+  useEffect(() => { cargar(); }, [cargar]);
+
+  const borrarVisita = async (id) => {
     try {
       await visitasService.delete(id);
-      await loadAll();
+      await cargar();
     } catch (err) {
       setError(err.message || "Error al eliminar la visita");
     }
   };
 
-  if (loading) {
-    return (
-      <Layout>
-        <Cargando texto="Cargando las visitas…" />
-      </Layout>
-    );
-  }
+  const visitaCreada = async (visita) => {
+    setFormAbierto(false);
+    setAviso(`Visita agendada para ${visita.visitante_nombre}.`);
+    setTimeout(() => setAviso(""), 5000);
+    await cargar();
+  };
 
-  if (error) {
-    return (
-      <Layout>
-        <div role="alert" className="mb-4 rounded-2xl border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-800">
-          {error}
-        </div>
-        <button
-          onClick={loadAll}
-          className="px-4 py-2 bg-niebla text-white rounded-lg hover:bg-niebla-oscuro text-sm font-semibold transition-colors"
-        >
-          Reintentar
-        </button>
-      </Layout>
-    );
+  if (cargando) {
+    return <Layout><Cargando texto="Cargando las visitas…" /></Layout>;
   }
 
   const pendientes = solicitudes.filter((s) => s.estado === "revision");
-  const procesadas = solicitudes.filter((s) => s.estado !== "revision");
+  const resueltas = solicitudes.filter((s) => s.estado !== "revision");
 
   return (
     <Layout>
-      <h1 className="mb-8 text-3xl font-bold text-mar">Gestión de visitas</h1>
-
-      {/* ── Section 1: Visit requests ── */}
-      <section className="mb-10">
-        <div className="flex items-center gap-3 mb-4">
-          <h2 className="text-lg font-extrabold text-mar">Solicitudes de visita</h2>
-          {pendientes.length > 0 && (
-            <Badge
-              variant="revision"
-              text={`${pendientes.length} pendiente${pendientes.length !== 1 ? "s" : ""}`}
-            />
-          )}
+      <header className="mb-8 flex flex-wrap items-start justify-between gap-4">
+        <div>
+          <h1 className="text-3xl font-bold text-mar">Visitas</h1>
+          <p className="mt-1 text-sm text-niebla-oscuro">
+            Los pedidos que llegan por la web y las visitas que cargás a mano, en un solo lugar.
+          </p>
         </div>
-
-        {solicitudes.length === 0 ? (
-          <p className="text-niebla-oscuro text-sm">No hay solicitudes de visita aún.</p>
-        ) : (
-          <>
-            {pendientes.length > 0 && (
-              <div className="mb-6">
-                <p className="mb-3 text-xs font-bold uppercase tracking-wide text-niebla-oscuro">
-                  Pendientes de aprobación
-                </p>
-                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-                  {pendientes.map((s) => (
-                    <SolicitudAdminCard key={s.id} solicitud={s} onUpdate={loadAll} />
-                  ))}
-                </div>
-              </div>
-            )}
-
-            {procesadas.length > 0 && (
-              <div>
-                <p className="text-xs font-semibold text-niebla-oscuro uppercase tracking-wide mb-3">
-                  Procesadas
-                </p>
-                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-                  {procesadas.map((s) => (
-                    <SolicitudAdminCard key={s.id} solicitud={s} onUpdate={loadAll} />
-                  ))}
-                </div>
-              </div>
-            )}
-          </>
+        {!formAbierto && (
+          <Button icon={CalendarPlus} onClick={() => setFormAbierto(true)}>
+            Crear visita manualmente
+          </Button>
         )}
-      </section>
+      </header>
 
-      {/* ── Section 2: Manually scheduled visits ── */}
-      <section className="mb-10">
-        <h2 className="text-lg font-extrabold text-mar mb-4">Visitas programadas manualmente</h2>
-        {visitas.length === 0 ? (
-          <p className="text-niebla-oscuro text-sm">No hay visitas manuales próximas.</p>
+      {error && (
+        <div role="alert" className="mb-6 rounded-2xl border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-800">
+          {error}
+        </div>
+      )}
+
+      <p aria-live="polite" className="sr-only">{aviso}</p>
+      {aviso && (
+        <div className="mb-6 rounded-2xl bg-pino/10 px-4 py-3 text-sm font-semibold text-pino">
+          {aviso}
+        </div>
+      )}
+
+      {formAbierto && (
+        <div className="mb-12">
+          <NuevaVisitaForm onCreada={visitaCreada} onCancelar={() => setFormAbierto(false)} />
+        </div>
+      )}
+
+      <Seccion
+        titulo="Esperando respuesta"
+        descripcion="Gente que pidió conocer a un animal. Al aceptar, la visita se agenda sola."
+        cantidad={pendientes.length}
+      >
+        {pendientes.length === 0 ? (
+          <p className="rounded-card border border-bruma/60 bg-espuma px-5 py-6 text-sm text-niebla-oscuro">
+            No hay pedidos sin responder.
+          </p>
         ) : (
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-            {visitas.map((visita) => (
-              <VisitaCard
-                key={visita.id}
-                visita={visita}
-                onDelete={handleDeleteVisita}
-                onUpdate={loadAll}
-              />
+          <div className="grid grid-cols-1 gap-4 md:grid-cols-2 xl:grid-cols-3">
+            {pendientes.map((s) => (
+              <SolicitudAdminCard key={s.id} solicitud={s} onUpdate={cargar} />
             ))}
           </div>
         )}
-      </section>
+      </Seccion>
 
-      {/* ── Section 3: Manual entry at the bottom ── */}
-      <div className="border-t border-bruma pt-6">
-        <p className="text-sm text-niebla-oscuro mb-3">
-          ¿Necesitás cargar una cita a mano? Usá el formulario de programación manual.
-        </p>
-        <Button as={Link} to="/nueva-visita" variant="secondary" icon={Plus}>
-          Programar visita manualmente
-        </Button>
-      </div>
+      <Seccion
+        titulo="Visitas agendadas"
+        descripcion="Las próximas, ordenadas por fecha."
+        cantidad={visitas.length}
+      >
+        {visitas.length === 0 ? (
+          <EmptyState
+            icon={Inbox}
+            title="No hay visitas próximas"
+            description="Cuando aceptes un pedido o cargues una visita a mano, va a aparecer acá."
+          />
+        ) : (
+          <div className="grid grid-cols-1 gap-4 md:grid-cols-2 xl:grid-cols-3">
+            {visitas.map((v) => (
+              <VisitaCard key={v.id} visita={v} onDelete={borrarVisita} onUpdate={cargar} />
+            ))}
+          </div>
+        )}
+      </Seccion>
+
+      {resueltas.length > 0 && (
+        <Seccion titulo="Pedidos ya resueltos" cantidad={resueltas.length}>
+          <div className="grid grid-cols-1 gap-4 md:grid-cols-2 xl:grid-cols-3">
+            {resueltas.map((s) => (
+              <SolicitudAdminCard key={s.id} solicitud={s} onUpdate={cargar} />
+            ))}
+          </div>
+        </Seccion>
+      )}
     </Layout>
   );
 }

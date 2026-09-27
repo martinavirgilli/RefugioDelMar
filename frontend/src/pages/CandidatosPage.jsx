@@ -1,217 +1,387 @@
 /**
- * CandidatosPage — main grid view of all shelter candidates.
+ * CandidatosPage — el catálogo del refugio.
  *
- * Fetches the full candidate list from the API on mount.
- * Filtering (search by name, species, adoption status) is done client-side
- * so the grid updates instantly without additional API calls.
+ * Es público: cualquiera puede mirar y abrir una ficha. La cuenta se pide
+ * recién al solicitar una visita.
+ *
+ * Los filtros se resuelven en el servidor y viven en la URL, así un catálogo
+ * filtrado se puede compartir o volver a él con el botón Atrás. La lista
+ * arranca corta y crece con "Ver más" en vez de traer todo de una.
+ *
+ * Los adoptados no se mezclan con los que buscan casa: quedan archivados en
+ * una sección plegada al final, que se carga recién cuando se abre.
  */
 
-import { useState, useEffect, useMemo } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
+import { useSearchParams } from "react-router-dom";
+import { ChevronDown, Search, SlidersHorizontal, X } from "lucide-react";
 import Layout from "../components/Layout";
 import Card from "../components/Card";
+import Button from "../components/Button";
 import EmptyState from "../components/EmptyState";
 import SolicitudVisitaModal from "../components/SolicitudVisitaModal";
-import Button from "../components/Button";
 import { SkeletonCard } from "../components/Skeleton";
 import { candidatosService } from "../services/api";
 
+const ORDENES = [
+  { valor: "recientes", etiqueta: "Los últimos en llegar" },
+  { valor: "antiguos", etiqueta: "Más tiempo esperando" },
+  { valor: "nombre", etiqueta: "Por nombre" },
+];
+
+const GENEROS = [
+  { valor: "hembra", etiqueta: "Hembra" },
+  { valor: "macho", etiqueta: "Macho" },
+  { valor: "desconocido", etiqueta: "Sin determinar" },
+];
+
+const POR_PAGINA = 12;
+
 export default function CandidatosPage() {
+  const [searchParams, setSearchParams] = useSearchParams();
+
+  // Los filtros viven en la URL: es la única fuente de verdad
+  const search = searchParams.get("search") ?? "";
+  const especie = searchParams.get("especie") ?? "";
+  const genero = searchParams.get("genero") ?? "";
+  const orden = searchParams.get("orden") ?? "recientes";
+
+  // El input de búsqueda se escribe local y recién después se lleva a la URL,
+  // para no disparar una consulta por cada tecla.
+  const [busqueda, setBusqueda] = useState(search);
+
   const [candidatos, setCandidatos] = useState([]);
-  const [loading, setLoading] = useState(true);
+  const [total, setTotal] = useState(0);
+  const [hayMas, setHayMas] = useState(false);
+  const [pagina, setPagina] = useState(1);
+  const [cargando, setCargando] = useState(true);
+  const [cargandoMas, setCargandoMas] = useState(false);
   const [error, setError] = useState("");
 
-  // Filter state
-  const [search, setSearch] = useState("");
-  const [especieFilter, setEspecieFilter] = useState("");
-  const [estadoFilter, setEstadoFilter] = useState("todos");
+  const [especies, setEspecies] = useState([]);
+  const [seleccionado, setSeleccionado] = useState(null);
 
-  // Visit-request modal state
-  const [selectedCandidato, setSelectedCandidato] = useState(null);
+  // Archivo de adoptados: se carga solo cuando alguien abre la sección
+  const [adoptados, setAdoptados] = useState(null);
+  const [cargandoAdoptados, setCargandoAdoptados] = useState(false);
 
+  const hayFiltros = Boolean(search || especie || genero) || orden !== "recientes";
+
+  /** Cambia un filtro y reinicia la paginación. */
+  const setFiltro = useCallback((clave, valor) => {
+    setSearchParams((previos) => {
+      const siguientes = new URLSearchParams(previos);
+      if (valor) siguientes.set(clave, valor);
+      else siguientes.delete(clave);
+      return siguientes;
+    }, { replace: true });
+  }, [setSearchParams]);
+
+  const limpiarFiltros = () => {
+    setBusqueda("");
+    setSearchParams({}, { replace: true });
+  };
+
+  // Debounce de la búsqueda: 350 ms después de dejar de escribir
+  const primeraVez = useRef(true);
   useEffect(() => {
-    loadCandidatos();
+    if (primeraVez.current) {
+      primeraVez.current = false;
+      return;
+    }
+    const id = setTimeout(() => setFiltro("search", busqueda.trim()), 350);
+    return () => clearTimeout(id);
+  }, [busqueda, setFiltro]);
+
+  // Especies para el desplegable: se piden una sola vez
+  useEffect(() => {
+    let cancelado = false;
+    candidatosService
+      .getEspecies({ redirectOn401: false })
+      .then((datos) => { if (!cancelado) setEspecies(datos); })
+      .catch(() => { /* el filtro de especie simplemente no aparece */ });
+    return () => { cancelado = true; };
   }, []);
 
-  /** Fetch all candidates from the API and update local state. */
-  const loadCandidatos = async () => {
+  // Primera página cada vez que cambia un filtro
+  useEffect(() => {
+    let cancelado = false;
+
+    const cargar = async () => {
+      try {
+        setCargando(true);
+        setError("");
+        const datos = await candidatosService.getAll(
+          { search, especie, genero, orden, adoptado: "false", page: 1, page_size: POR_PAGINA },
+          { redirectOn401: false },
+        );
+        if (cancelado) return;
+        setCandidatos(datos.resultados);
+        setTotal(datos.total);
+        setHayMas(datos.hayMas);
+        setPagina(1);
+      } catch (err) {
+        if (!cancelado) setError(err.message || "Error al cargar los candidatos");
+      } finally {
+        if (!cancelado) setCargando(false);
+      }
+    };
+
+    cargar();
+    return () => { cancelado = true; };
+  }, [search, especie, genero, orden]);
+
+  const verMas = async () => {
     try {
-      setLoading(true);
-      setError("");
-      const data = await candidatosService.getAll();
-      setCandidatos(Array.isArray(data) ? data : []);
+      setCargandoMas(true);
+      const siguiente = pagina + 1;
+      const datos = await candidatosService.getAll(
+        { search, especie, genero, orden, adoptado: "false", page: siguiente, page_size: POR_PAGINA },
+        { redirectOn401: false },
+      );
+      setCandidatos((previos) => [...previos, ...datos.resultados]);
+      setHayMas(datos.hayMas);
+      setPagina(siguiente);
     } catch (err) {
-      setError(err.message || "Error al cargar los candidatos");
+      setError(err.message || "Error al cargar más candidatos");
     } finally {
-      setLoading(false);
+      setCargandoMas(false);
     }
   };
 
-  /** Toggle adopted/available and reload the list to reflect the change. */
+  const abrirArchivo = async (abierto) => {
+    if (!abierto || adoptados !== null) return;
+    try {
+      setCargandoAdoptados(true);
+      const datos = await candidatosService.getAll(
+        { adoptado: "true", orden: "recientes", page_size: 48 },
+        { redirectOn401: false },
+      );
+      setAdoptados(datos.resultados);
+    } catch {
+      setAdoptados([]);
+    } finally {
+      setCargandoAdoptados(false);
+    }
+  };
+
+  /** Recarga la página actual tras una acción de admin. */
+  const recargar = async () => {
+    const datos = await candidatosService.getAll(
+      { search, especie, genero, orden, adoptado: "false", page_size: POR_PAGINA * pagina },
+      { redirectOn401: false },
+    );
+    setCandidatos(datos.resultados);
+    setTotal(datos.total);
+    setHayMas(datos.hayMas);
+    setAdoptados(null); // el archivo cambió: que se vuelva a pedir al abrirlo
+  };
+
   const handleToggleAdopcion = async (id) => {
     try {
       await candidatosService.toggleAdopcion(id);
-      await loadCandidatos();
+      await recargar();
     } catch (err) {
       setError(err.message || "Error al actualizar el estado de adopción");
     }
   };
 
-  /** Delete a candidate and reload the list. */
   const handleDelete = async (id) => {
     try {
       await candidatosService.delete(id);
-      await loadCandidatos();
+      await recargar();
     } catch (err) {
       setError(err.message || "Error al eliminar el candidato");
     }
   };
 
-  // Build the unique species list from the loaded candidates for the filter dropdown
-  const especies = useMemo(() => {
-    const set = new Set(candidatos.map((c) => c.especie).filter(Boolean));
-    return [...set].sort();
-  }, [candidatos]);
-
-  // Apply filters then sort so non-adopted candidates appear first
-  const filtered = useMemo(() => {
-    return candidatos
-      .filter((c) => {
-        const matchSearch = !search || c.nombre.toLowerCase().includes(search.toLowerCase());
-        const matchEspecie = !especieFilter || c.especie.toLowerCase() === especieFilter.toLowerCase();
-        const matchEstado =
-          estadoFilter === "todos" ||
-          (estadoFilter === "disponibles" && !c.adoptado) ||
-          (estadoFilter === "adoptados" && c.adoptado);
-        return matchSearch && matchEspecie && matchEstado;
-      })
-      .sort((a, b) => {
-        if (a.adoptado === b.adoptado) return 0;
-        return a.adoptado ? 1 : -1; // non-adopted first
-      });
-  }, [candidatos, search, especieFilter, estadoFilter]);
-
-  if (loading) {
-    return (
-      <Layout>
-        <h1 className="text-3xl font-bold text-mar">Candidatos</h1>
-        <p className="mt-1 text-sm text-niebla-oscuro">Buscando a los que esperan una casa…</p>
-        <div
-          className="mt-8 grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-3"
-          aria-busy="true"
-        >
-          {[0, 1, 2, 3, 4, 5].map((i) => <SkeletonCard key={i} />)}
-        </div>
-      </Layout>
-    );
-  }
-
-  if (error) {
-    return (
-      <Layout>
-        <div className="mx-auto mt-10 max-w-md">
-          <div role="alert" className="mb-4 rounded-2xl border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-800">
-            {error}
-          </div>
-          <Button variant="secondary" onClick={loadCandidatos}>Reintentar</Button>
-        </div>
-      </Layout>
-    );
-  }
+  const claseCampo =
+    "w-full rounded-2xl border border-bruma bg-espuma px-4 py-2.5 text-sm text-mar " +
+    "focus:outline-none focus-visible:ring-2 focus-visible:ring-mar-claro focus-visible:ring-offset-2 " +
+    "focus-visible:ring-offset-arena";
 
   return (
     <Layout>
-      {/* ── Page header ── */}
-      <div className="flex items-center justify-between mb-6">
-        <div>
-          <h1 className="text-3xl font-bold text-mar">Candidatos</h1>
-          <p className="text-niebla-oscuro text-sm mt-0.5">
-            Mostrando {filtered.length} de {candidatos.length} candidatos
-          </p>
-        </div>
-      </div>
+      <header className="mb-8">
+        <h1 className="text-3xl font-bold text-mar sm:text-4xl">Buscan una casa</h1>
+        <p className="mt-2 max-w-2xl text-sm leading-relaxed text-niebla-oscuro">
+          Mirá sus fichas con calma. Para conocer a alguno en persona te vamos a pedir una cuenta;
+          para mirar, no.
+        </p>
+      </header>
 
-      {/* ── Filter bar ── */}
-      <div className="bg-espuma border border-bruma rounded-2xl shadow-sm p-4 mb-6 flex flex-wrap gap-3 items-end">
-
-        {/* Name search */}
-        <div className="flex flex-col gap-1 flex-1 min-w-[160px]">
-          <label className="text-xs font-semibold text-mar">Buscar por nombre</label>
-          <input
-            type="text"
-            value={search}
-            onChange={(e) => setSearch(e.target.value)}
-            placeholder="Ej: Max, Luna..."
-            className="border border-bruma px-3 py-2 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-mar focus:border-mar transition-colors bg-espuma placeholder:text-niebla-oscuro"
-          />
-        </div>
-
-        {/* Species filter */}
-        <div className="flex flex-col gap-1 min-w-[140px]">
-          <label className="text-xs font-semibold text-mar">Especie</label>
-          <select
-            value={especieFilter}
-            onChange={(e) => setEspecieFilter(e.target.value)}
-            className="border border-bruma px-3 py-2 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-mar focus:border-mar bg-espuma text-mar"
-          >
-            <option value="">Todas</option>
-            {especies.map((e) => (
-              <option key={e} value={e} className="capitalize">{e}</option>
-            ))}
-          </select>
-        </div>
-
-        {/* Adoption status filter */}
-        <div className="flex flex-col gap-1 min-w-[140px]">
-          <label className="text-xs font-semibold text-mar">Estado</label>
-          <select
-            value={estadoFilter}
-            onChange={(e) => setEstadoFilter(e.target.value)}
-            className="border border-bruma px-3 py-2 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-mar focus:border-mar bg-espuma text-mar"
-          >
-            <option value="todos">Todos</option>
-            <option value="disponibles">Disponibles</option>
-            <option value="adoptados">Adoptados</option>
-          </select>
-        </div>
-
-        {/* Clear filters button — only shown when any filter is active */}
-        {(search || especieFilter || estadoFilter !== "todos") && (
-          <button
-            onClick={() => { setSearch(""); setEspecieFilter(""); setEstadoFilter("todos"); }}
-            className="text-xs text-niebla-oscuro hover:text-mar font-semibold self-end pb-2"
-          >
-            Limpiar filtros ×
-          </button>
-        )}
-      </div>
-
-      {/* ── Candidates grid ── */}
-      {filtered.length === 0 ? (
-        <EmptyState
-          title="Sin resultados"
-          description="Ningún candidato coincide con los filtros seleccionados."
-        />
-      ) : (
-        <div className="columns-1 sm:columns-2 lg:columns-3 gap-6">
-          {filtered.map((c) => (
-            <div key={c.id} className="mb-6 break-inside-avoid">
-              <Card
-                candidato={c}
-                onToggle={handleToggleAdopcion}
-                onDelete={handleDelete}
-                onSolicitar={setSelectedCandidato}
+      {/* ── Filtros ── */}
+      <search className="mb-8 rounded-card border border-bruma/60 bg-espuma p-4 shadow-suave sm:p-5">
+        <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-4">
+          <div className="sm:col-span-2 lg:col-span-1">
+            <label htmlFor="buscar" className="mb-1.5 block text-xs font-bold text-mar">
+              Buscar por nombre
+            </label>
+            <div className="relative">
+              <Search
+                className="pointer-events-none absolute left-3.5 top-1/2 size-4 -translate-y-1/2 text-niebla"
+                aria-hidden="true"
+              />
+              <input
+                id="buscar"
+                type="search"
+                value={busqueda}
+                onChange={(e) => setBusqueda(e.target.value)}
+                placeholder="Malena, Tuco…"
+                className={`${claseCampo} pl-10`}
               />
             </div>
-          ))}
+          </div>
+
+          <div>
+            <label htmlFor="especie" className="mb-1.5 block text-xs font-bold text-mar">
+              Tipo de animal
+            </label>
+            <select
+              id="especie"
+              value={especie}
+              onChange={(e) => setFiltro("especie", e.target.value)}
+              className={`${claseCampo} capitalize`}
+            >
+              <option value="">Todos</option>
+              {especies.map((e) => (
+                <option key={e} value={e} className="capitalize">{e}</option>
+              ))}
+            </select>
+          </div>
+
+          <div>
+            <label htmlFor="genero" className="mb-1.5 block text-xs font-bold text-mar">
+              Sexo
+            </label>
+            <select
+              id="genero"
+              value={genero}
+              onChange={(e) => setFiltro("genero", e.target.value)}
+              className={claseCampo}
+            >
+              <option value="">Todos</option>
+              {GENEROS.map((g) => (
+                <option key={g.valor} value={g.valor}>{g.etiqueta}</option>
+              ))}
+            </select>
+          </div>
+
+          <div>
+            <label htmlFor="orden" className="mb-1.5 block text-xs font-bold text-mar">
+              Ordenar por
+            </label>
+            <select
+              id="orden"
+              value={orden}
+              onChange={(e) => setFiltro("orden", e.target.value)}
+              className={claseCampo}
+            >
+              {ORDENES.map((o) => (
+                <option key={o.valor} value={o.valor}>{o.etiqueta}</option>
+              ))}
+            </select>
+          </div>
+        </div>
+
+        <div className="mt-4 flex flex-wrap items-center justify-between gap-3 border-t border-bruma pt-4">
+          <p className="flex items-center gap-2 text-xs text-niebla-oscuro">
+            <SlidersHorizontal className="size-3.5" aria-hidden="true" />
+            {cargando
+              ? "Buscando…"
+              : `${total} ${total === 1 ? "animal espera" : "animales esperan"} una casa`}
+          </p>
+          {hayFiltros && (
+            <Button variant="ghost" size="sm" icon={X} onClick={limpiarFiltros}>
+              Limpiar filtros
+            </Button>
+          )}
+        </div>
+      </search>
+
+      {error && (
+        <div role="alert" className="mb-6 rounded-2xl border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-800">
+          {error}
         </div>
       )}
 
-      {/* Visit-request modal — rendered outside the grid so it overlays everything */}
-      {selectedCandidato && (
+      {/* ── Grilla ── */}
+      {cargando ? (
+        <div className="grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-3" aria-busy="true">
+          {Array.from({ length: 6 }, (_, i) => <SkeletonCard key={i} />)}
+        </div>
+      ) : candidatos.length === 0 ? (
+        <EmptyState
+          title="No encontramos ninguno así"
+          description="Probá con otros filtros. Los animales del refugio cambian seguido, así que quizás mañana haya alguien que encaje."
+          action={hayFiltros ? <Button onClick={limpiarFiltros}>Ver todos</Button> : null}
+        />
+      ) : (
+        <>
+          <div className="grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-3">
+            {candidatos.map((c) => (
+              <Card
+                key={c.id}
+                candidato={c}
+                onToggle={handleToggleAdopcion}
+                onDelete={handleDelete}
+                onSolicitar={setSeleccionado}
+              />
+            ))}
+          </div>
+
+          {hayMas && (
+            <div className="mt-10 text-center">
+              <Button variant="secondary" size="lg" loading={cargandoMas} onClick={verMas}>
+                {cargandoMas ? "Cargando…" : "Ver más candidatos"}
+              </Button>
+            </div>
+          )}
+        </>
+      )}
+
+      {/* ── Archivo de adoptados ── */}
+      <details
+        className="group mt-16 rounded-card border border-bruma/60 bg-espuma/60 shadow-suave"
+        onToggle={(e) => abrirArchivo(e.currentTarget.open)}
+      >
+        <summary className="flex cursor-pointer list-none items-center justify-between gap-3 rounded-card px-5 py-4 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-mar-claro focus-visible:ring-offset-2 focus-visible:ring-offset-arena">
+          <span>
+            <span className="font-display text-lg font-bold text-mar">Ya encontraron casa</span>
+            <span className="mt-0.5 block text-xs text-niebla-oscuro">
+              Fichas archivadas de los que se fueron con su familia.
+            </span>
+          </span>
+          <ChevronDown
+            className="size-5 shrink-0 text-niebla transition-transform group-open:rotate-180"
+            aria-hidden="true"
+          />
+        </summary>
+
+        <div className="border-t border-bruma p-5">
+          {cargandoAdoptados ? (
+            <div className="grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-3" aria-busy="true">
+              {Array.from({ length: 3 }, (_, i) => <SkeletonCard key={i} />)}
+            </div>
+          ) : adoptados && adoptados.length > 0 ? (
+            <div className="grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-3">
+              {adoptados.map((c) => (
+                <Card key={c.id} candidato={c} onToggle={handleToggleAdopcion} onDelete={handleDelete} />
+              ))}
+            </div>
+          ) : (
+            <p className="py-6 text-center text-sm text-niebla-oscuro">
+              Todavía no hay fichas archivadas.
+            </p>
+          )}
+        </div>
+      </details>
+
+      {seleccionado && (
         <SolicitudVisitaModal
-          candidato={selectedCandidato}
-          onClose={() => setSelectedCandidato(null)}
-          onSuccess={() => setSelectedCandidato(null)}
+          candidato={seleccionado}
+          onClose={() => setSeleccionado(null)}
+          onSuccess={() => setSeleccionado(null)}
         />
       )}
     </Layout>

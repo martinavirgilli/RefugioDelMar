@@ -15,21 +15,24 @@ import Layout from "../../components/Layout";
 export default function AdopcionesLayout() {
   return (
     <Layout>
-      <div className="flex flex-col items-center justify-center min-h-[70vh]">
-        <h1 className="text-3xl font-bold mb-6 text-niebla-oscuro">
-          Adopciones
-        </h1>
+      <div className="flex flex-col">
+        <header className="mb-6">
+          <h1 className="text-3xl font-bold text-mar sm:text-4xl">Adopciones</h1>
+          <p className="mt-2 max-w-2xl text-sm leading-relaxed text-niebla-oscuro">
+            Cada número de acá abajo es un animal que hoy duerme en una casa.
+          </p>
+        </header>
 
         {/* Tab navigation */}
-        <div className="flex gap-6 mb-8">
+        <div className="mb-8 flex gap-2">
           <NavLink
             to="/adopciones"
             end
             className={({ isActive }) =>
-              `pb-2 text-lg font-medium transition-colors ${
+              `rounded-full px-4 py-2 text-sm font-bold transition-colors ${
                 isActive
-                  ? "text-niebla-oscuro border-b-4 border-niebla"
-                  : "text-niebla-oscuro hover:text-niebla-oscuro"
+                  ? "bg-bruma/50 text-mar"
+                  : "text-niebla-oscuro hover:bg-bruma/30 hover:text-mar"
               }`
             }
           >
@@ -38,10 +41,10 @@ export default function AdopcionesLayout() {
           <NavLink
             to="/adopciones/historial"
             className={({ isActive }) =>
-              `pb-2 text-lg font-medium transition-colors ${
+              `rounded-full px-4 py-2 text-sm font-bold transition-colors ${
                 isActive
-                  ? "text-niebla-oscuro border-b-4 border-niebla"
-                  : "text-niebla-oscuro hover:text-niebla-oscuro"
+                  ? "bg-bruma/50 text-mar"
+                  : "text-niebla-oscuro hover:bg-bruma/30 hover:text-mar"
               }`
             }
           >
@@ -50,7 +53,7 @@ export default function AdopcionesLayout() {
         </div>
 
         {/* Child route content (AdopcionesResumen or AdopcionesHistorial) */}
-        <div className="w-full max-w-4xl">
+        <div className="w-full">
           <Outlet />
         </div>
       </div>

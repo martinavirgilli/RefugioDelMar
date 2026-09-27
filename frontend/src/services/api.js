@@ -24,6 +24,19 @@ const clearSession = () => {
 };
 
 /**
+ * Build a query string, dropping empty values so the URL stays readable
+ * and the backend never receives `?especie=&genero=`.
+ */
+const queryString = (params = {}) => {
+  const query = new URLSearchParams();
+  for (const [clave, valor] of Object.entries(params)) {
+    if (valor !== undefined && valor !== null && valor !== "") query.append(clave, valor);
+  }
+  const texto = query.toString();
+  return texto ? `?${texto}` : "";
+};
+
+/**
  * Turn any failed Response into a single, readable Error message.
  *
  * The backend answers with three different error shapes, so they are all
@@ -115,8 +128,12 @@ export const apiRequest = async (endpoint, options = {}) => {
   const { redirectOn401 = true, headers: extraHeaders, ...fetchOptions } = options;
   const token = getToken();
 
+  // With FormData the browser must set Content-Type itself, because it has to
+  // append the multipart boundary. Setting it by hand breaks the upload.
+  const esFormData = fetchOptions.body instanceof FormData;
+
   const headers = {
-    "Content-Type": "application/json",
+    ...(esFormData ? {} : { "Content-Type": "application/json" }),
     ...extraHeaders,
   };
 
@@ -166,6 +183,26 @@ export const authService = {
 
     return handleResponse(response, "No pudimos crear la cuenta");
   },
+
+  /** Search accounts by name or email, for the manual visit form. Admin only. */
+  buscarUsuarios: async (q) => {
+    const response = await apiRequest(`/api/auth/usuarios/buscar${queryString({ q })}`, {
+      method: "GET",
+    });
+    return handleResponse(response, "Error al buscar usuarios");
+  },
+
+  /**
+   * Create an account for a visitor. Admin only.
+   * The response carries `password_temporal`: it is shown once and never again.
+   */
+  crearUsuario: async (email, nombre) => {
+    const response = await apiRequest("/api/auth/usuarios/crear", {
+      method: "POST",
+      body: JSON.stringify({ email, nombre }),
+    });
+    return handleResponse(response, "No pudimos crear la cuenta");
+  },
 };
 
 
@@ -174,10 +211,34 @@ export const authService = {
 // ---------------------------------------------------------------------------
 
 export const candidatosService = {
-  /** Fetch all candidates. */
-  getAll: async (options = {}) => {
-    const response = await apiRequest("/api/candidatos/", { method: "GET", ...options });
-    return handleResponse(response, "Error al cargar los candidatos", { unwrapResults: true });
+  /**
+   * Fetch one page of the catalogue.
+   *
+   * @param {object} params - search, especie, genero, adoptado, orden, page, page_size
+   * @returns {Promise<{resultados: object[], total: number, hayMas: boolean}>}
+   */
+  getAll: async (params = {}, options = {}) => {
+    const response = await apiRequest(`/api/candidatos/${queryString(params)}`, {
+      method: "GET",
+      ...options,
+    });
+    const data = await handleResponse(response, "Error al cargar los candidatos");
+
+    // Without pagination the API returns a plain array; with it, an object.
+    if (Array.isArray(data)) {
+      return { resultados: data, total: data.length, hayMas: false };
+    }
+    return {
+      resultados: data.results ?? [],
+      total: data.count ?? 0,
+      hayMas: Boolean(data.next),
+    };
+  },
+
+  /** Distinct species present in the catalogue, for the filter dropdown. */
+  getEspecies: async (options = {}) => {
+    const response = await apiRequest("/api/candidatos/especies/", { method: "GET", ...options });
+    return handleResponse(response, "Error al cargar las especies");
   },
 
   /** Fetch a single candidate by its primary key. */
@@ -212,11 +273,43 @@ export const candidatosService = {
 
   /**
    * Toggle the adopted/available status of a candidate.
-   * Uses a custom PATCH action defined on the ViewSet. Requires admin privileges.
+   * An adopted candidate is archived, not deleted. Requires admin privileges.
    */
   toggleAdopcion: async (id) => {
     const response = await apiRequest(`/api/candidatos/${id}/adoptar/`, { method: "PATCH" });
     return handleResponse(response, "Error al actualizar el estado de adopción");
+  },
+
+  /**
+   * Add a photo to a candidate's gallery. Admin only.
+   * Pass { url } to link a photo, or { archivo: File } to upload one.
+   */
+  agregarFoto: async (id, { url, archivo, alt = "" }) => {
+    let body;
+    if (archivo) {
+      body = new FormData();
+      body.append("archivo", archivo);
+      body.append("alt", alt);
+    } else {
+      body = JSON.stringify({ url, alt });
+    }
+
+    const response = await apiRequest(`/api/candidatos/${id}/fotos/`, { method: "POST", body });
+    return handleResponse(response, "Error al agregar la foto");
+  },
+
+  /** Remove one photo from a candidate's gallery. Admin only. */
+  borrarFoto: async (id, fotoId) => {
+    const response = await apiRequest(`/api/candidatos/${id}/fotos/${fotoId}/`, {
+      method: "DELETE",
+    });
+    return handleResponse(response, "Error al borrar la foto");
+  },
+
+  /** Requests and visits of one candidate, in a single call. Admin only. */
+  getActividad: async (id) => {
+    const response = await apiRequest(`/api/candidatos/${id}/actividad/`, { method: "GET" });
+    return handleResponse(response, "Error al cargar la actividad del candidato");
   },
 };
 
@@ -226,13 +319,13 @@ export const candidatosService = {
 // ---------------------------------------------------------------------------
 
 export const adopcionesService = {
-  /** Fetch aggregated stats: total, adopted, and available counts. */
+  /** Aggregated stats: totals, breakdown by species and by month. Public. */
   getResumen: async (options = {}) => {
     const response = await apiRequest("/api/adopciones/resumen", { method: "GET", ...options });
     return handleResponse(response, "Error al cargar el resumen de adopciones");
   },
 
-  /** Fetch the list of all adopted candidates ordered by most recent. */
+  /** Animals that already found a home, most recent first. Public. */
   getHistorial: async (options = {}) => {
     const response = await apiRequest("/api/adopciones/historial", { method: "GET", ...options });
     return handleResponse(response, "Error al cargar el historial de adopciones");
@@ -245,9 +338,12 @@ export const adopcionesService = {
 // ---------------------------------------------------------------------------
 
 export const visitasService = {
-  /** Fetch all upcoming (future) visits. Admin only. */
-  getAll: async () => {
-    const response = await apiRequest("/api/visitas/", { method: "GET" });
+  /**
+   * Fetch scheduled visits. Admin only.
+   * @param {object} params - candidato, historial
+   */
+  getAll: async (params = {}) => {
+    const response = await apiRequest(`/api/visitas/${queryString(params)}`, { method: "GET" });
     return handleResponse(response, "Error al cargar las visitas", { unwrapResults: true });
   },
 
@@ -295,8 +391,10 @@ export const solicitudesService = {
    * Fetch visit requests.
    * Admins receive all requests; regular users receive only their own.
    */
-  getAll: async () => {
-    const response = await apiRequest("/api/visitas/solicitudes/", { method: "GET" });
+  getAll: async (params = {}) => {
+    const response = await apiRequest(`/api/visitas/solicitudes/${queryString(params)}`, {
+      method: "GET",
+    });
     return handleResponse(response, "Error al cargar las solicitudes", { unwrapResults: true });
   },
 
@@ -309,7 +407,7 @@ export const solicitudesService = {
     return handleResponse(response, "Error al enviar la solicitud");
   },
 
-  /** Accept a visit request and set the visit date. Admin only. */
+  /** Accept a request and book the visit. Admin only. */
   aceptar: async (id, fecha_visita) => {
     const response = await apiRequest(`/api/visitas/solicitudes/${id}/aceptar/`, {
       method: "PATCH",
@@ -318,12 +416,46 @@ export const solicitudesService = {
     return handleResponse(response, "Error al aceptar la solicitud");
   },
 
-  /** Reject a visit request. Admin only. */
+  /** Turn down a request. Admin only. */
   rechazar: async (id) => {
     const response = await apiRequest(`/api/visitas/solicitudes/${id}/rechazar/`, {
       method: "PATCH",
       body: JSON.stringify({}),
     });
     return handleResponse(response, "Error al rechazar la solicitud");
+  },
+};
+
+
+// ---------------------------------------------------------------------------
+// Colaboraciones service (voluntariado y hogar de tránsito)
+// ---------------------------------------------------------------------------
+
+export const colaboracionesService = {
+  /** Submit an offer to help. Public — no account required. */
+  create: async (colaboracion) => {
+    const response = await apiRequest("/api/colaboraciones/", {
+      method: "POST",
+      body: JSON.stringify(colaboracion),
+      redirectOn401: false,
+    });
+    return handleResponse(response, "No pudimos enviar tu postulación");
+  },
+
+  /** List offers, optionally filtered by tipo or estado. Admin only. */
+  getAll: async (params = {}) => {
+    const response = await apiRequest(`/api/colaboraciones/${queryString(params)}`, {
+      method: "GET",
+    });
+    return handleResponse(response, "Error al cargar las postulaciones", { unwrapResults: true });
+  },
+
+  /** Move an offer through the pipeline or leave an internal note. Admin only. */
+  update: async (id, cambios) => {
+    const response = await apiRequest(`/api/colaboraciones/${id}/`, {
+      method: "PATCH",
+      body: JSON.stringify(cambios),
+    });
+    return handleResponse(response, "Error al actualizar la postulación");
   },
 };
