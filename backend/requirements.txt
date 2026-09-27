@@ -13,6 +13,9 @@ django-cors-headers==4.7.0
 # PostgreSQL adapter
 psycopg[binary]==3.2.4
 
+# Requerido por ImageField: valida y procesa las fotos que sube el refugio
+Pillow==11.1.0
+
 # Environment variable management (.env files and DATABASE_URL parsing)
 django-environ==0.12.0
 

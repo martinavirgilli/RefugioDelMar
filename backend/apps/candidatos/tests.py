@@ -112,3 +112,83 @@ class CandidatoPermissionsTests(APITestCase):
 
         self.assertEqual(self.client.get(self.list_url).status_code, status.HTTP_200_OK)
         self.assertEqual(self.client.get(self.detail_url).status_code, status.HTTP_200_OK)
+
+
+class CatalogoPublicoTests(APITestCase):
+    """The catalogue opened up to visitors without an account (v2)."""
+
+    @classmethod
+    def setUpTestData(cls):
+        cls.usuario = User.objects.create_user(
+            username='ana@example.com', email='ana@example.com', password='secret1234',
+        )
+        cls.perro = Candidato.objects.create(
+            nombre='Malena', especie='perro', genero='hembra', edad=3,
+            descripcion='Mestiza tranquila.', adoptado=False,
+        )
+        cls.gato = Candidato.objects.create(
+            nombre='Tuco', especie='gato', genero='macho', edad=1,
+            descripcion='Naranja y conversador.', adoptado=False,
+        )
+        cls.adoptado = Candidato.objects.create(
+            nombre='Otto', especie='perro', genero='macho', edad=5,
+            descripcion='Ya encontró casa.', adoptado=True,
+        )
+
+    def test_anonimo_puede_ver_el_catalogo_y_una_ficha(self):
+        listado = self.client.get(reverse('candidato-list'))
+        detalle = self.client.get(reverse('candidato-detail', args=[self.perro.id]))
+
+        self.assertEqual(listado.status_code, status.HTTP_200_OK)
+        self.assertEqual(listado.data['count'], 3)
+        self.assertEqual(detalle.status_code, status.HTTP_200_OK)
+        self.assertEqual(detalle.data['nombre'], 'Malena')
+
+    def test_anonimo_sigue_sin_poder_escribir(self):
+        crear = self.client.post(reverse('candidato-list'), {
+            'nombre': 'Intruso', 'especie': 'gato', 'genero': 'macho',
+            'edad': 1, 'descripcion': 'No debería entrar.',
+        })
+        adoptar = self.client.patch(reverse('candidato-adoptar', args=[self.perro.id]))
+
+        self.assertEqual(crear.status_code, status.HTTP_401_UNAUTHORIZED)
+        self.assertEqual(adoptar.status_code, status.HTTP_401_UNAUTHORIZED)
+        self.assertEqual(Candidato.objects.count(), 3)
+
+    def test_filtros_del_catalogo(self):
+        url = reverse('candidato-list')
+
+        self.assertEqual(self.client.get(url, {'especie': 'gato'}).data['count'], 1)
+        self.assertEqual(self.client.get(url, {'genero': 'hembra'}).data['count'], 1)
+        self.assertEqual(self.client.get(url, {'adoptado': 'false'}).data['count'], 2)
+        self.assertEqual(self.client.get(url, {'adoptado': 'true'}).data['count'], 1)
+        self.assertEqual(self.client.get(url, {'search': 'mal'}).data['count'], 1)
+
+    def test_orden_por_antiguedad(self):
+        url = reverse('candidato-list')
+
+        recientes = self.client.get(url, {'orden': 'recientes'}).data['results']
+        antiguos = self.client.get(url, {'orden': 'antiguos'}).data['results']
+
+        self.assertEqual(recientes[0]['nombre'], 'Otto')
+        self.assertEqual(antiguos[0]['nombre'], 'Malena')
+
+    def test_paginacion_con_page_size(self):
+        respuesta = self.client.get(reverse('candidato-list'), {'page_size': 2})
+
+        self.assertEqual(len(respuesta.data['results']), 2)
+        self.assertIsNotNone(respuesta.data['next'])
+
+    def test_especies_disponibles_para_el_filtro(self):
+        respuesta = self.client.get(reverse('candidato-especies'))
+
+        self.assertEqual(respuesta.status_code, status.HTTP_200_OK)
+        self.assertEqual(respuesta.data, ['gato', 'perro'])
+
+    def test_actividad_del_candidato_es_solo_de_admin(self):
+        url = reverse('candidato-actividad', args=[self.perro.id])
+
+        self.assertEqual(self.client.get(url).status_code, status.HTTP_401_UNAUTHORIZED)
+
+        self.client.force_authenticate(self.usuario)
+        self.assertEqual(self.client.get(url).status_code, status.HTTP_403_FORBIDDEN)

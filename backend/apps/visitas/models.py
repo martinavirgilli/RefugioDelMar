@@ -27,6 +27,16 @@ class Visita(models.Model):
         on_delete=models.CASCADE,
         related_name='visitas',
     )
+    # Optional: a visit booked by phone or at the door belongs to someone who
+    # may not have an account. The visitor's data is always stored inline below,
+    # and this link is filled in only when the person does have one.
+    usuario = models.ForeignKey(
+        settings.AUTH_USER_MODEL,
+        on_delete=models.SET_NULL,
+        related_name='visitas',
+        blank=True,
+        null=True,
+    )
     fecha_visita = models.DateTimeField()
     visitante_nombre = models.CharField(max_length=100)
     visitante_email = models.EmailField()
@@ -76,6 +86,15 @@ class SolicitudVisita(models.Model):
     motivo = models.TextField()
     estado = models.CharField(max_length=20, choices=ESTADO_CHOICES, default='revision')
     fecha_visita = models.DateTimeField(blank=True, null=True)  # Set by admin when accepting
+    # The scheduled visit created when an admin accepts this request. Without
+    # it, accepted requests and booked visits were two lists that never met.
+    visita = models.OneToOneField(
+        'Visita',
+        on_delete=models.SET_NULL,
+        related_name='solicitud',
+        blank=True,
+        null=True,
+    )
     fecha_creacion = models.DateTimeField(auto_now_add=True)
     fecha_actualizacion = models.DateTimeField(auto_now=True)
 

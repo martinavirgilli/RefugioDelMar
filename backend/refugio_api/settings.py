@@ -54,6 +54,7 @@ INSTALLED_APPS = [
     'apps.candidatos',
     'apps.adopciones',
     'apps.visitas',
+    'apps.colaboraciones',
 ]
 
 MIDDLEWARE = [
@@ -143,6 +144,12 @@ USE_TZ = True
 STATIC_URL = 'static/'
 STATIC_ROOT = os.path.join(BASE_DIR, 'staticfiles')
 
+# Uploaded files (gallery photos the shelter uploads instead of linking).
+# Careful: on Render's free tier this directory is wiped on every deploy, so
+# uploads only persist in local development. Pasted URLs always survive.
+MEDIA_URL = 'media/'
+MEDIA_ROOT = os.path.join(BASE_DIR, 'media')
+
 # WhiteNoise compresses and fingerprints static files for efficient long-term caching
 STATICFILES_STORAGE = 'whitenoise.storage.CompressedManifestStaticFilesStorage'
 
@@ -161,8 +168,8 @@ REST_FRAMEWORK = {
     'DEFAULT_PERMISSION_CLASSES': (
         'rest_framework.permissions.IsAuthenticated',
     ),
-    'DEFAULT_PAGINATION_CLASS': 'rest_framework.pagination.PageNumberPagination',
-    'PAGE_SIZE': 20,
+    'DEFAULT_PAGINATION_CLASS': 'refugio_api.pagination.StandardPagination',
+    'PAGE_SIZE': 12,
     # Only JSON responses — no browsable API in production
     'DEFAULT_RENDERER_CLASSES': (
         'rest_framework.renderers.JSONRenderer',

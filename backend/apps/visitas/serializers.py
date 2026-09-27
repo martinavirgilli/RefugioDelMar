@@ -21,12 +21,13 @@ class VisitaSerializer(serializers.ModelSerializer):
     class Meta:
         model = Visita
         fields = [
-            'id', 'candidato', 'candidato_detalle', 'fecha_visita',
+            'id', 'candidato', 'candidato_detalle', 'usuario', 'fecha_visita',
             'visitante_nombre', 'visitante_email', 'visitante_telefono',
             'estado', 'notas', 'comentario_final',
             'fecha_creacion', 'fecha_actualizacion',
         ]
         read_only_fields = ['id', 'fecha_creacion', 'fecha_actualizacion']
+        extra_kwargs = {'usuario': {'required': False, 'allow_null': True}}
 
     def validate_visitante_email(self, value):
         """Validate that a well-formed email address is provided."""
@@ -63,10 +64,13 @@ class SolicitudVisitaSerializer(serializers.ModelSerializer):
         fields = [
             'id', 'candidato', 'candidato_detalle', 'usuario',
             'nombre_apellido', 'email', 'telefono', 'motivo',
-            'estado', 'fecha_visita',
+            'estado', 'fecha_visita', 'visita',
             'fecha_creacion', 'fecha_actualizacion',
         ]
-        read_only_fields = ['id', 'usuario', 'estado', 'fecha_visita', 'fecha_creacion', 'fecha_actualizacion']
+        read_only_fields = [
+            'id', 'usuario', 'estado', 'fecha_visita', 'visita',
+            'fecha_creacion', 'fecha_actualizacion',
+        ]
 
     def validate_email(self, value):
         if not value or '@' not in value:
