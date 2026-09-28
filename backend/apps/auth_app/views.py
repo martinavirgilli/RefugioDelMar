@@ -81,8 +81,10 @@ def login(request):
             'user': _user_response(user),
         }, status=status.HTTP_200_OK)
 
-    except Exception as e:
-        logger.error(f"Login error: {str(e)}")
+    except Exception:
+        # exception() y no error(): sin el traceback en el log, un 500 acá no se
+        # puede diagnosticar, porque al cliente nunca se le cuenta el motivo.
+        logger.exception("Login error")
         return Response(
             {'error': 'Error processing login'},
             status=status.HTTP_500_INTERNAL_SERVER_ERROR
@@ -115,13 +117,13 @@ def register(request):
             status=status.HTTP_400_BAD_REQUEST
         )
 
-    if User.objects.filter(email=email).exists():
-        return Response(
-            {'error': 'An account with this email already exists'},
-            status=status.HTTP_400_BAD_REQUEST
-        )
-
     try:
+        if User.objects.filter(email=email).exists():
+            return Response(
+                {'error': 'An account with this email already exists'},
+                status=status.HTTP_400_BAD_REQUEST
+            )
+
         user = User.objects.create_user(
             username=email,
             email=email,
@@ -138,8 +140,8 @@ def register(request):
             'user': _user_response(user),
         }, status=status.HTTP_201_CREATED)
 
-    except Exception as e:
-        logger.error(f"Registration error: {str(e)}")
+    except Exception:
+        logger.exception("Registration error")
         return Response(
             {'error': 'Error creating account'},
             status=status.HTTP_500_INTERNAL_SERVER_ERROR
