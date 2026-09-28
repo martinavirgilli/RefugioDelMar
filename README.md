@@ -251,6 +251,19 @@ la red.
 Variables de entorno: `SECRET_KEY`, `DEBUG=False`, `DATABASE_URL` (la *Internal Database URL* de la
 base de Render) y `CORS_ALLOWED_ORIGINS` con la URL exacta del sitio en Netlify.
 
+### Poblar la demo
+
+Con una base recién creada, desde la Shell del servicio:
+
+```bash
+python manage.py createsuperuser   # tu cuenta de admin, con tu contraseña
+python manage.py seed_demo         # los datos ficticios de la demo
+```
+
+`seed_demo` no crea ninguna cuenta de administrador a propósito: el código es público, así que una
+contraseña escrita acá sería una contraseña publicada. Las fotos salen de `frontend/public/demo/`,
+servidas por Netlify, para que sobrevivan a los deploys.
+
 > Las fotos subidas como archivo se guardan en el disco del servicio, que en el plan gratuito de Render
 > se borra en cada deploy. Las fotos cargadas por URL sobreviven. Mover las subidas a Cloudinary o S3
 > está pendiente.
