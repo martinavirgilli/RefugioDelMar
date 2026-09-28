@@ -1,0 +1,27 @@
+# Configuración del deploy del frontend en Netlify.
+#
+# Desde la v2 el repo tiene dos aplicaciones (frontend/ y backend/), así que el
+# build ya no corre en la raíz: `base` lo manda a frontend/ y `publish` es
+# relativo a esa carpeta.
+#
+# La regla de redirección es lo que hace que una SPA funcione con links
+# directos: sin ella, entrar a /candidatos/43 o recargar esa página devuelve un
+# 404 de Netlify, porque ese archivo no existe en el disco. Devolviendo
+# index.html con estado 200, React Router resuelve la ruta del lado del cliente.
+#
+# Ojo: VITE_API_URL se configura en el panel de Netlify (Site settings →
+# Environment variables) con la URL del backend en Render. Sin eso, el sitio
+# publicado le pide los datos a localhost y se ve vacío.
+
+[build]
+  base    = "frontend"
+  command = "npm run build"
+  publish = "dist"
+
+[build.environment]
+  NODE_VERSION = "20"
+
+[[redirects]]
+  from   = "/*"
+  to     = "/index.html"
+  status = 200
