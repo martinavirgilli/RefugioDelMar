@@ -223,6 +223,40 @@ Cada carpeta tiene su `.env.example` documentado. El `.env` real nunca se commit
 
 ---
 
+## Deploy
+
+El repo tiene **dos aplicaciones**, así que cada servicio apunta a su carpeta.
+
+### Netlify (frontend)
+
+Lo resuelve `netlify.toml`: carpeta base `frontend`, build `npm run build`, publica `dist` y redirige
+todo a `index.html` (sin esa redirección, entrar directo a `/candidatos/43` o recargar da 404).
+
+Lo único a mano: la variable de entorno **`VITE_API_URL`** con la URL del backend en Render. Sin eso,
+el sitio publicado le pide los datos a `localhost` y se ve vacío.
+
+### Render (backend)
+
+| Ajuste | Valor |
+|---|---|
+| Root Directory | `backend` |
+| Build Command | `pip install -r requirements.txt && python manage.py collectstatic --noinput` |
+| Start Command | `./start.sh` |
+
+**Las migraciones corren en `start.sh`, no en el build.** Durante el build Render no conecta a la red
+privada, así que el hostname interno de la base no resuelve y el deploy falla con
+`OperationalError: [Errno -2] Name or service not known`. Al arrancar, el servicio ya está dentro de
+la red.
+
+Variables de entorno: `SECRET_KEY`, `DEBUG=False`, `DATABASE_URL` (la *Internal Database URL* de la
+base de Render) y `CORS_ALLOWED_ORIGINS` con la URL exacta del sitio en Netlify.
+
+> Las fotos subidas como archivo se guardan en el disco del servicio, que en el plan gratuito de Render
+> se borra en cada deploy. Las fotos cargadas por URL sobreviven. Mover las subidas a Cloudinary o S3
+> está pendiente.
+
+---
+
 ## Sobre cómo se construyó
 
 El proyecto nació como trabajo final de una diplomatura y la **v2** la desarrollé usando
