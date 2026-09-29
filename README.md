@@ -13,6 +13,25 @@ y quienes se ofrecen a ayudar.
 
 ---
 
+## Cómo se ve
+
+**La cara pública** — el catálogo abierto a cualquiera y la ficha de cada animal, con su carrusel de
+fotos y el pedido de visita ahí mismo:
+
+| Inicio | Catálogo |
+|---|---|
+| ![Inicio del sitio: foto del refugio con el título "Acá cada animal espera lo mismo: que alguien lo elija" y los contadores de adopciones](docs/capturas/home.jpg) | ![Catálogo con filtros por nombre, tipo, sexo y orden, y las fichas de los animales que buscan casa](docs/capturas/catalogo.jpg) |
+
+![Ficha de Nina: carrusel de fotos a la izquierda, datos e historia a la derecha, con el botón para pedir la visita y el aviso de que puede salir por el día](docs/capturas/ficha.jpg)
+
+**La cara del refugio** — el panel de gestión y el editor de cada ficha, que solo ve el equipo:
+
+| Panel de candidatos | Editor de la ficha |
+|---|---|
+| ![Panel de administración con contadores, filtros y una fila por ficha indicando quién espera respuesta](docs/capturas/panel-admin.jpg) | ![Editor de una ficha: datos del animal, galería de fotos y bloque de adopción](docs/capturas/editor-ficha.jpg) |
+
+---
+
 ## Por qué existe
 
 Un animal en situación de calle no compite por atención: compite por visibilidad. La mayoría de
