@@ -272,12 +272,25 @@ base de Render) y `CORS_ALLOWED_ORIGINS` con la URL exacta del sitio en Netlify.
 
 ### Poblar la demo
 
-Con una base recién creada, desde la Shell del servicio:
+Las migraciones corren solas al desplegar, pero la base arranca sin datos y sin cuenta de admin.
+
+La Shell de Render es una función de pago, así que los dos comandos se corren **desde una máquina
+local apuntando a la base de producción**. Se puede porque la base está en Neon, que es alcanzable
+desde afuera (la de Render vivía solo en su red privada). En `backend/.env`:
+
+```
+DATABASE_URL=postgresql://usuario:clave@ep-….neon.tech/neondb?sslmode=require
+```
+
+y después, desde `backend/`:
 
 ```bash
 python manage.py createsuperuser   # tu cuenta de admin, con tu contraseña
 python manage.py seed_demo         # los datos ficticios de la demo
 ```
+
+Terminado eso, conviene sacar esa línea del `.env` para que el desarrollo local no siga escribiendo
+en la base de producción. El `.env` nunca se commitea.
 
 `seed_demo` no crea ninguna cuenta de administrador a propósito: el código es público, así que una
 contraseña escrita acá sería una contraseña publicada. Las fotos salen de `frontend/public/demo/`,
