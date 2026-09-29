@@ -7,7 +7,7 @@ React + Django REST, con dos caras: la pública, pensada para que alguien se ena
 y pida conocerlo, y la interna, donde el equipo del refugio gestiona fichas, visitas, adopciones
 y quienes se ofrecen a ayudar.
 
-**Demo (v1):** https://refugio-del-mar.netlify.app · La **v2** vive en la rama `v2`.
+**Demo:** https://refugio-del-mar.netlify.app · Es la **v2**, ya integrada en `main`. La versión original quedó en la rama `v1-original`.
 
 🇦🇷 Español (acá abajo) · 🇬🇧 [English version](#english)
 
@@ -329,7 +329,7 @@ Django REST, with two faces: the public one, built so that someone falls for an 
 meet them, and the internal one, where the shelter manages records, visits, adoptions and the people
 offering to help.
 
-**Demo (v1):** https://refugio-del-mar.netlify.app · **v2** lives on the `v2` branch.
+**Demo:** https://refugio-del-mar.netlify.app · This is **v2**, already merged into `main`. The original version lives on the `v1-original` branch.
 
 ## Why it exists
 
